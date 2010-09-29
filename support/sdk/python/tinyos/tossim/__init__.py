@@ -29,4 +29,4 @@
 #
 # Author Philip Levis
 
-__all__ = ["TossimApp", "TossimNescDecls"]
+__all__ = ["TossimApp", "TossimNescDecls", "TossimHelp"]
