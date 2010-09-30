@@ -63,6 +63,7 @@ module TossimPacketModelC {
     interface SplitControl as Control;
     interface PacketAcknowledgements;
     interface TossimPacketModel as Packet;
+    interface ChannelAccess;
   }
   uses interface GainRadioModel;
 }
@@ -311,6 +312,10 @@ implementation {
     else {
       return FALSE;
     }
+  }
+
+  command bool ChannelAccess.clearChannel() {
+    return call GainRadioModel.clearChannel();
   }
 
   default event void Control.startDone(error_t err) {

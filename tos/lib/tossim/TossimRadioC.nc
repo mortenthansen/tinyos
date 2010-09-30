@@ -43,6 +43,7 @@ configuration TossimRadioC {
     interface TossimPacket;
     interface Packet;
     interface PacketAcknowledgements;
+    interface ChannelAccess;
   }
 
 } implementation {
@@ -66,5 +67,6 @@ configuration TossimRadioC {
   TossimPacket = TossimRadioP;
   Packet = TossimRadioP;
   PacketAcknowledgements = Network;
+  ChannelAccess = Network;
 
 }
