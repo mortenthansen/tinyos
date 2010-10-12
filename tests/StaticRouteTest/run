@@ -1,0 +1,47 @@
+#!/bin/bash
+
+MAX_TIME=400
+#FOLDER=../experiments/new/1b_smalldist1to128_delay5_init9_period2000_lpl100_battery200
+FOLDER=../experiments/new/2b_smalldist1to128_delay5_init9_period2000_lpl100_battery200
+#FOLDER=../experiments/new/3b_smalldist1to128_delay5_init9_period2000_lpl100_battery200
+
+MOTES=2
+BATTERY=200
+PERIOD=2000
+LPL=100
+
+for ((t=-1; t<=5; t=t+1))
+do
+v=-1
+if [ "$t" -eq "$v" ]
+then
+threshold=VAR
+make telosb && motelist -c | tb-deploy
+else
+let threshold=2**${t}
+env CFLAGS="-DSELECTIVE_FIXED_THRESHOLD=${threshold}" make telosb && motelist -c | tb-deploy
+fi
+
+echo $threshold
+
+sleep 1
+
+for ((run=1; run<=5; run=run+1))
+do
+
+echo $run
+
+motelist -c | tb-controlall off && motelist -c | tb-controlall on
+sleep 0.5
+
+motelist -c | tb-moteconnectors | tb-logger > ${FOLDER}/${MOTES}motes-battery${BATTERY}uAh-period${PERIOD}ms-lpl${LPL}-threshold${threshold}-run${run}.log &
+
+sleep ${MAX_TIME}
+
+pkill java
+
+sleep 1
+
+done
+
+done
