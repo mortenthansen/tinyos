@@ -35,6 +35,7 @@ CFLAGS += -DCC2420_HW_ADDRESS_RECOGNITION
 #CFLAGS += -I$(TOSDIR)/lib/softwareenergy
 
 CFLAGS += -I$(TOSDIR)/lib/tinydebug
+CFLAGS += -I$(TOSDIR)/lib/softwareenergy
 CFLAGS += -I$(TOSDIR)/lib/selective
 CFLAGS += -I$(TOSDIR)/lib/net/static
 

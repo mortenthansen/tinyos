@@ -1,4 +1,4 @@
-#include <emath.h>
+#include "SoftwareEnergy.h"
 #include "Debug.h"
 
 module MoteStatsP {
@@ -31,7 +31,7 @@ module MoteStatsP {
   };
   
   uint8_t nextState;
-  battery_charge_t lastEnergy;
+  softenergy_charge_t lastEnergy;
   
   uint8_t idleCounter, transmitCounter, receiveCounter, piCounter, prCounter;
   
@@ -86,7 +86,7 @@ module MoteStatsP {
   void updatePR(bool r) {
     if(prCounter<100) prCounter++;
     pr = ewma_counter(pr, r, prCounter);
-    debug("MoteStats,PR","PR is %f after being updated with %hhu", pi, i);
+    debug("MoteStats,PR","PR is %f after being updated with %hhu", pr, r);
   }
   
   inline void handleIdle(float spent) {
@@ -221,7 +221,7 @@ module MoteStatsP {
     return spent;
   }
   
-  command void LplInfo.recordTakeover() {
+  event void LplInfo.recordTakeover() {
     
     if(nextState==S_RECEIVE || nextState==S_IDLE) {
       prevEnergy = get_spent();
@@ -231,12 +231,12 @@ module MoteStatsP {
       nextState = S_UNKNOWN;
       debug("MoteStats,CANCEL", "Cancel with prevEnergy %f\n", prevEnergy);
     } else {
-      call MoteStats.record();
+      signal LplInfo.record();
     }
     
   }
   
-  command void LplInfo.record() {
+  event void LplInfo.record() {
     float spent;
     
     float energyScaleFactor = 1.0;
@@ -271,15 +271,15 @@ module MoteStatsP {
     nextState = S_UNKNOWN;
   }
   
-  command void LplInfo.nextReceive() {
+  event void LplInfo.nextReceive() {
     nextState = S_RECEIVE;
   }
   
-  command void LplInfo.nextTransmit() {
+  event void LplInfo.nextTransmit() {
     nextState = S_TRANSMIT;
   }
   
-  command void LplInfo.nextTransmitTakeover() {
+  event void LplInfo.nextTransmitTakeover() {
     if(prevState==S_IDLE || prevState==S_RECEIVE) {
       debug("MoteStats,CUTOFF", "Cutoff with prevState %hhu and nextPenalty %f\n", prevState, nextPenalty);
     }
@@ -295,11 +295,11 @@ module MoteStatsP {
     nextState = S_TRANSMIT;
   }
   
-  command void LplInfo.nextIdle() {
+  event void LplInfo.nextIdle() {
     nextState = S_IDLE;
   }
   
-  command void AppInfo.packetGenerated() {
+  event void AppInfo.generated() {
     updatePI(FALSE); // update PI with active state
     updatePR(FALSE);
 	
@@ -311,14 +311,14 @@ module MoteStatsP {
     //printf("GENERATED e:%lu, est:%lu\n", (uint32_t)(PACKET_GENERATION_EST*PRECISION), (uint32_t)(receiveEnergy*PRECISION));
   }
   
-  command void LplInfo.received() {
+  event void LplInfo.received() {
     updatePI(FALSE); // update PI with active state
     updatePR(TRUE);
     receivedSinceLast++;
     debug("MoteStats,RECEIVED", "Packet Received\n");
   }
   
-  command void LplInfo.wakeUp() {
+  event void LplInfo.wakeUp() {
     wakeUpSinceLast++;
   }
   

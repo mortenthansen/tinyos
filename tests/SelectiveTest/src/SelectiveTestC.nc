@@ -20,10 +20,11 @@ implementation {
     SoftwareEnergyC,
     SelectiveForwardingP as Selective,
     MoteStatsP as MoteStats,
+    DefaultLplC,
     TestSensorC;
 
   App.Boot -> MainC;
-  App.Leds -> LedsC;
+  App.Leds -> Leds;
   App.StartTimer -> StartTimer;
   App.Timer -> Timer;
 
@@ -43,12 +44,18 @@ implementation {
   Selective.SubIntercept -> StaticRouteC;
   Selective.AMPacket -> ActiveMessageC;
   Selective.MoteStats -> MoteStats;
+  Selective.SoftwareEnergy -> SoftwareEnergyC;
 
   MainC.SoftwareInit -> MoteStats;
   MoteStats.AppInfo -> App;
   MoteStats.LplInfo -> DefaultLplC;
   MoteStats.SoftwareEnergy -> SoftwareEnergyC;
-  
+
+  components
+    new RadioSoftwareEnergyC(19600, 17040),
+    CC2420ActiveMessageC;
+  RadioSoftwareEnergyC.RadioInfo -> CC2420ActiveMessageC;
+
   components
     DebugC;
 
