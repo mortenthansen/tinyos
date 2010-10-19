@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<buildTargets>
+<target loop="false" name="Target telosb" nostdinc="false" time="0.0">
+<includes build="true" defaults="true">
+<include recursive="true" type="global">/home/morten/workspace/tinyos-2.x-extension</include>
+</includes>
+<excludes>
+<exclude>.*\.svn.*</exclude>
+</excludes>
+<typedefs/>
+<macros/>
+<selected>telosb</selected>
+<application>CollectionAppC</application>
+<default>true</default>
+<boards/>
+</target>
+</buildTargets>
