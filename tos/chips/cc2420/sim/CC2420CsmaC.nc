@@ -1,5 +1,3 @@
-#include "SoftwareEnergy.h"
-
 module CC2420CsmaC {
 
 	provides {
@@ -17,10 +15,6 @@ module CC2420CsmaC {
 	}
 	
 } implementation {
-
-	enum cc2424_softenergy_enums {
-		CC2420_RX = unique(UQ_SOFTENERGY_STATE),
-	};
 	
 	uint8_t running = FALSE;
 
@@ -32,7 +26,6 @@ module CC2420CsmaC {
 	}
 
 	command error_t Init.init() {
-		call SoftwareEnergyTable.setCurrent(CC2420_RX, 19600);
 		return SUCCESS;
 	}
 
@@ -77,11 +70,7 @@ module CC2420CsmaC {
 		if(running) {
 			return FAIL;
 		} 
-<<<<<<< HEAD
-		call SoftwareEnergy.on(CC2420_RX);
-=======
 		signal RadioInfo.rx();
->>>>>>> 7e1a8ab... LplInfo and RadioInfo moved to interfaces and CC2420 driver
 		return call SubControl.start();
 	}
 	
@@ -95,11 +84,7 @@ module CC2420CsmaC {
 		if(!running) {
 			return FAIL;
 		}
-<<<<<<< HEAD
-		call SoftwareEnergy.off(CC2420_RX);
-=======
 		signal RadioInfo.off();
->>>>>>> 7e1a8ab... LplInfo and RadioInfo moved to interfaces and CC2420 driver
 		dbg("CC2420Csma","CSMA stop\n");
 		return call SubControl.stop();
 	}
