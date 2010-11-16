@@ -50,6 +50,8 @@ module DefaultLplP {
     interface LowPowerListening;
     interface Send;
     interface Receive;
+    interface LplInfo;
+    interface RadioInfo;
   }
   
   uses {
@@ -182,9 +184,13 @@ implementation {
       
       if(call RadioPowerState.getState() == S_ON) {
         initializeSend();
+        signal RadioInfo.off();
+        signal RadioInfo.rx();
+        signal LplInfo.transmit();
         return SUCCESS;
         
       } else {
+        signal LplInfo.transmit();
         post startRadio();
       }
       
@@ -320,6 +326,7 @@ implementation {
   event message_t *SubReceive.receive(message_t* msg, void* payload, 
       uint8_t len) {
     startOffTimer();
+    signal LplInfo.received();
     return signal Receive.receive(msg, payload, len);
   }
   

@@ -57,6 +57,7 @@ module PowerCycleP {
   provides {
     interface PowerCycle;
     interface SplitControl;
+    interface LplInfo;
   }
 
   uses {
@@ -176,6 +177,7 @@ implementation {
   /***************** Timer Events ****************/
   event void OnTimer.fired() {
     if(isDutyCycling()) {
+      signal LplInfo.wakeUp();
       if(call RadioPowerState.getState() == S_OFF) {
         ccaChecks = 0;
         
@@ -208,7 +210,8 @@ implementation {
   event void SubControl.stopDone(error_t error) {
     call RadioPowerState.forceState(S_OFF);
     //call Leds.led2Off();
-    
+    if(call SendState.isIdle()) signal LplInfo.record();
+
     if(finishSplitControlRequests()) {
       return;
       
@@ -252,6 +255,7 @@ implementation {
         for( ; ccaChecks < MAX_LPL_CCA_CHECKS && call SendState.isIdle(); ccaChecks++) {
           if(call PacketIndicator.isReceiving()) {
             signal PowerCycle.detected();
+            signal LplInfo.nextReceive();
             return;
           }
           
@@ -259,6 +263,7 @@ implementation {
             detects++;
             if(detects > MIN_SAMPLES_BEFORE_DETECT) {
               signal PowerCycle.detected(); 
+              signal LplInfo.nextReceive();
               return;
             }
             // Leave the radio on for upper layers to perform some transaction
@@ -267,6 +272,7 @@ implementation {
       }
       
       if(call SendState.isIdle()) {
+        signal LplInfo.nextIdle();
         post stopRadio();
       }
     }  

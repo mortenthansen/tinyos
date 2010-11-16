@@ -51,6 +51,8 @@ configuration CC2420ActiveMessageC {
     interface LowPowerListening;
     interface PacketLink;
     //interface SendNotifier[am_id_t amId];
+    interface RadioInfo;
+    interface LplInfo;
   }
 } implementation {
 
@@ -79,12 +81,9 @@ configuration CC2420ActiveMessageC {
   components CC2420PacketC;
   components CC2420CsmaC;
   components CC2420TransmitC;
-  components SoftwareEnergyC;
-  
+
   MainC.SoftwareInit -> CC2420CsmaC;
   CC2420CsmaC.CC2420PacketBody -> CC2420PacketC;
-  CC2420CsmaC.SoftwareEnergy -> SoftwareEnergyC;
-  CC2420CsmaC.SoftwareEnergyTable -> SoftwareEnergyC;
   
   CC2420TransmitC.CC2420PacketBody -> CC2420PacketC;
   CC2420TransmitC.ChannelAccess -> Radio;
@@ -120,4 +119,8 @@ configuration CC2420ActiveMessageC {
   LowPowerListening = LplC;
   PacketLink = LinkC;
 
+  RadioInfo = CC2420CsmaC;
+  RadioInfo = LplC;
+  LplInfo = LplC;
+  
 }

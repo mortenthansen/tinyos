@@ -45,6 +45,8 @@ configuration DummyLplC {
     interface LowPowerListening;
     interface SplitControl;
     interface State as SendState;
+    interface LplInfo;
+    interface RadioInfo;
   }
   
   uses {
@@ -63,6 +65,8 @@ implementation {
   SplitControl = SubControl;
   LowPowerListening = DummyLplP;
   SendState = StateC;
+  LplInfo = DummyLplP;
+  RadioInfo = DummyLplP;
   
 }
 

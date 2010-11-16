@@ -42,6 +42,7 @@ configuration PowerCycleC {
     interface SplitControl;
     interface State as SplitControlState;
     interface State as RadioPowerState;
+    interface LplInfo;
   }
 }
 
@@ -66,6 +67,7 @@ implementation {
   SplitControl = PowerCycleP;
   SplitControlState = SplitControlStateC;
   RadioPowerState = RadioPowerStateC;
+  LplInfo = PowerCycleP;
   
   PowerCycleP.EnergyIndicator -> CC2420TransmitC.EnergyIndicator;
   PowerCycleP.ByteIndicator -> CC2420TransmitC.ByteIndicator;

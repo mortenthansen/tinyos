@@ -45,6 +45,8 @@ configuration DefaultLplC {
     interface Receive;
     interface SplitControl;
     interface State as SendState;
+    interface LplInfo;
+    interface RadioInfo;
   }
   
   uses { 
@@ -74,6 +76,9 @@ implementation {
   Receive = DefaultLplP;
   SplitControl = PowerCycleC;
   SendState = SendStateC;
+  LplInfo = DefaultLplP;
+  LplInfo = PowerCycleC;
+  RadioInfo = DefaultLplP;
   
   SubControl = DefaultLplP.SubControl;
   SubReceive = DefaultLplP.SubReceive;

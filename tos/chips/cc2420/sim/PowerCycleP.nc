@@ -57,6 +57,7 @@ module PowerCycleP {
   provides {
     interface PowerCycle;
     interface SplitControl;
+    interface LplInfo;
   }
 
   uses {
@@ -183,6 +184,7 @@ implementation {
 		}
 
     if(isDutyCycling()) {
+      signal LplInfo.wakeUp();
       if(call RadioPowerState.getState() == S_OFF) {
         ccaChecks = 0;
         dbg("PowerCycle", "wakeup @ %llu\n", sim_time());
@@ -215,6 +217,7 @@ implementation {
   event void SubControl.stopDone(error_t error) {
     call RadioPowerState.forceState(S_OFF);
     //call Leds.led2Off();
+    if(call SendState.isIdle()) signal LplInfo.radioOff();
     
     if(finishSplitControlRequests()) {
       return;
@@ -262,7 +265,9 @@ implementation {
 				dbg("PowerCycle", "checking (%hhu)...\t",ccaChecks);
 				if(call EnergyIndicator.isReceiving()) {
 					signal PowerCycle.detected();
+                    signal LplInfo.energyDetected();
 					dbg_clear("PowerCycle", "detected\n");
+                    return;
 				} else {
 					isCcaDelay = TRUE;
 					dbg_clear("PowerCycle", "delay\n");

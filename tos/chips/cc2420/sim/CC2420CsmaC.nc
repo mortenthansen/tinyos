@@ -7,14 +7,13 @@ module CC2420CsmaC {
 		interface Send;
 		interface SplitControl;
 		interface RadioBackoff;
+        interface RadioInfo;
 	}
 
 	uses {
 		interface CC2420PacketBody;
 		interface CC2420Transmit;
 		interface SplitControl as SubControl;
-		interface SoftwareEnergy;
-		interface SoftwareEnergyTable;
 	}
 	
 } implementation {
@@ -78,7 +77,11 @@ module CC2420CsmaC {
 		if(running) {
 			return FAIL;
 		} 
+<<<<<<< HEAD
 		call SoftwareEnergy.on(CC2420_RX);
+=======
+		signal RadioInfo.rx();
+>>>>>>> 7e1a8ab... LplInfo and RadioInfo moved to interfaces and CC2420 driver
 		return call SubControl.start();
 	}
 	
@@ -92,7 +95,11 @@ module CC2420CsmaC {
 		if(!running) {
 			return FAIL;
 		}
+<<<<<<< HEAD
 		call SoftwareEnergy.off(CC2420_RX);
+=======
+		signal RadioInfo.off();
+>>>>>>> 7e1a8ab... LplInfo and RadioInfo moved to interfaces and CC2420 driver
 		dbg("CC2420Csma","CSMA stop\n");
 		return call SubControl.stop();
 	}
@@ -111,5 +118,10 @@ module CC2420CsmaC {
 
   default event void SplitControl.startDone(error_t error) {}
   default event void SplitControl.stopDone(error_t error) {}
+
+  default async event void RadioInfo.rx() {}
+  default async event void RadioInfo.tx() {} 
+  default async event void RadioInfo.off() {}
+
 
 }

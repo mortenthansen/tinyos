@@ -39,6 +39,8 @@
 module DummyLplP {
   provides {
     interface LowPowerListening;
+    interface LplInfo;
+    interface RadioInfo;
   }
 }
 
