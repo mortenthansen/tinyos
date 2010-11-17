@@ -91,11 +91,13 @@ module SelectiveTestP {
   event void SerialControl.stopDone(error_t err) {}
     
   event void StartTimer.fired() {
+    debug("App","Starting!\n");
     call RadioControl.start();
   }
 
   event void RadioControl.startDone(error_t error) {
     if(SINGLE_SENDER==0 || SINGLE_SENDER==TOS_NODE_ID) {
+      debug("App","Timer started!\n");
       call Timer.startPeriodic(DEFAULT_SAMPLE_INTERVAL);
     }
   }
@@ -105,6 +107,7 @@ module SelectiveTestP {
   /***************** Timer ****************/
   
   event void Timer.fired() { 
+    debug("App", "Fired.\n"); 
     call Sensor.read();
   }
 

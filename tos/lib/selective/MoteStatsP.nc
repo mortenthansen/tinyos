@@ -16,21 +16,22 @@ module MoteStatsP {
   
 } implementation {
 
-  enum {
-    S_UNKNOWN,
+  enum state_enums {
+    S_OFF,
     S_IDLE,
     S_RECEIVE,
     S_TRANSMIT,
     S_GENERATED,
+  };
+
+  enum config_enums {
     INIT_COUNTER = 0,
     MAX_COUNTER = 100,
     MATURE_COUNTER = 1, // set to 1 to disable
     PACKET_GENERATION_EST = 0, // according to jesus mail 22 may 2009.
-    
-    PRECISION = 1000,
   };
   
-  uint8_t nextState;
+  uint8_t state;
   softenergy_charge_t lastEnergy;
   
   uint8_t idleCounter, transmitCounter, receiveCounter, piCounter, prCounter;
@@ -43,22 +44,18 @@ module MoteStatsP {
   float pendingEnergy;
   uint8_t pendingFree;	
   
-  uint8_t prevState;
-  float prevEnergy;
   float nextPenalty;
 
-  float ewma_counter(float oldValue, float newValue, uint32_t counter) {
-	if(counter<2) {
-      return newValue;
-	} else {
-		float gain = 1.0-1.0/((float)counter);
-		return gain * oldValue + (1.0-gain) * newValue;
-	}
-  }
+  void recordState();
+  void updatePI(bool i);
+  void updatePR(bool r);
+  float get_spent();
+  float ewma_counter(float oldValue, float newValue, uint32_t counter);
 
-  
+  /***************** Init ****************/  
+
   command error_t Init.init() {
-    nextState = S_UNKNOWN;
+    state = S_OFF;
     lastEnergy = 0;
     
     idleCounter = transmitCounter = receiveCounter = piCounter = prCounter = INIT_COUNTER;
@@ -70,24 +67,103 @@ module MoteStatsP {
     pendingEnergy = 0.0;
     pendingFree = 0;
     
-    prevState = S_UNKNOWN;
-    prevEnergy = 0.0;
     nextPenalty = 0.0;
     
     return SUCCESS;
   }
+
+  /***************** LplInfo ****************/
   
-  void updatePI(bool i) {
-    if(piCounter<100) piCounter++;
-    pi = ewma_counter(pi, i, piCounter);
-    debug("MoteStats,PI","PI is %f after being updated with %hhu", pi, i);
+  event void LplInfo.transmit() {
+
+    if(state!=S_OFF) {
+
+      if(state==S_RECEIVE || state==S_IDLE) {
+        float spent = get_spent();
+        
+        if(state==S_IDLE && idleEnergy>spent) {
+          nextPenalty = idleEnergy - spent;
+        } else if(state==S_RECEIVE && receiveEnergy>spent) {
+          nextPenalty = receiveEnergy - spent;
+        } else {
+          nextPenalty = 0.0;
+        }
+
+        receivedSinceLast = wakeUpSinceLast = 0;
+        state = S_OFF;
+
+        debug("MoteStats,CANCEL", "Cancel with spent %f\n", spent);
+
+      } else {
+        recordState();
+      }
+      
+      debug("MotesStats,NEXT", "Next TRANSMIT TAKEOVER\n");
+
+    } else {
+      debug("MotesStats,NEXT", "Next TRANSMIT\n");
+    }
+
+    state = S_TRANSMIT;
+
+  }
+
+  
+  event void LplInfo.radioOff() {
+    recordState();
   }
   
-  void updatePR(bool r) {
-    if(prCounter<100) prCounter++;
-    pr = ewma_counter(pr, r, prCounter);
-    debug("MoteStats,PR","PR is %f after being updated with %hhu", pr, r);
+  event void LplInfo.energyDetected() {
+    debug("MotesStats,NEXT", "Next RECEIVE\n");
+    state = S_RECEIVE;
   }
+    
+  
+  event void LplInfo.received() {
+    updatePI(FALSE); // update PI with active state
+    updatePR(TRUE);
+    receivedSinceLast++;
+    debug("MoteStats,RECEIVED", "Packet Received\n");
+  }
+  
+  event void LplInfo.wakeUp() {
+    wakeUpSinceLast++;
+    if(state==S_OFF) {
+      state = S_IDLE;
+    }
+  }
+
+  /***************** AppInfo ****************/
+  
+  event void AppInfo.generated() {
+    updatePI(FALSE); // update PI with active state
+    updatePR(FALSE);
+    debug("MoteStats,GENERATED", "Packet Generated\n");
+  }
+
+  /***************** MoteStats ****************/
+  
+  command float MoteStats.getPI() {
+    return (pi*100.0);
+  }
+  
+  command float MoteStats.getPR() {
+    return (pr*100.0);
+  }
+  
+  command float MoteStats.getEI() {
+    return idleCounter>=MATURE_COUNTER? idleEnergy : 0.0;
+  }
+  
+  command float MoteStats.getET() {
+    return transmitCounter>=MATURE_COUNTER ? transmitEnergy : 0.0;
+  }
+  
+  command float MoteStats.getER() {
+    return receiveCounter>=MATURE_COUNTER ? receiveEnergy : 0.0;
+  }
+
+  /***************** Functions ****************/
   
   inline void handleIdle(float spent) {
     
@@ -203,13 +279,57 @@ module MoteStatsP {
     }
     
   }
+
+  void recordState() {
+    float spent;
+    
+    float energyScaleFactor = 1.0;
+    
+    // first condition for when mote start, second for when it dies
+    if(lastEnergy==0 || call SoftwareEnergy.used()==0) {
+      lastEnergy = call SoftwareEnergy.used();
+      debug("MoteStats,IGNORE","Ignore state!\n");
+      return;
+    }
+    
+    spent = get_spent() * energyScaleFactor;
+
+    // idle event  
+    if(state==S_IDLE || (state==S_RECEIVE && receivedSinceLast==0)) {
+      handleIdle(spent);
+    // receive event  
+    } else if(state==S_RECEIVE && receivedSinceLast!=0) {
+      handleReceive(spent);		
+    // transmit event
+    } else if(state==S_TRANSMIT) {
+      handleTransmit(spent);
+    } else {
+      debug("MoteStats,OFF_STATE", "ERROR: Radio off when it was already in S_OFF state");
+    }
+
+    receivedSinceLast = wakeUpSinceLast = 0;
+    nextPenalty = 0.0;
+    state = S_OFF;
+  }
+
+  void updatePI(bool i) {
+    if(piCounter<100) piCounter++;
+    pi = ewma_counter(pi, i, piCounter);
+    debug("MoteStats,PI","PI is %f after being updated with %hhu\n", pi, i);
+  }
+  
+  void updatePR(bool r) {
+    if(prCounter<100) prCounter++;
+    pr = ewma_counter(pr, r, prCounter);
+    debug("MoteStats,PR","PR is %f after being updated with %hhu\n", pr, r);
+  }
   
   float get_spent() {
     softenergy_charge_t energySpent;
     float spent;
     
     atomic {
-      energySpent = lastEnergy - call SoftwareEnergy.used();
+      energySpent = call SoftwareEnergy.used() - lastEnergy;
       lastEnergy = call SoftwareEnergy.used();
     }
     
@@ -221,126 +341,14 @@ module MoteStatsP {
     return spent;
   }
   
-  event void LplInfo.recordTakeover() {
-    
-    if(nextState==S_RECEIVE || nextState==S_IDLE) {
-      prevEnergy = get_spent();
-      prevState = nextState;
-      receivedSinceLast = wakeUpSinceLast = 0;
-      nextPenalty = 0.0;
-      nextState = S_UNKNOWN;
-      debug("MoteStats,CANCEL", "Cancel with prevEnergy %f\n", prevEnergy);
-    } else {
-      signal LplInfo.record();
-    }
-    
+  float ewma_counter(float oldValue, float newValue, uint32_t counter) {
+	if(counter<2) {
+      return newValue;
+	} else {
+		float gain = 1.0-1.0/((float)counter);
+		return gain * oldValue + (1.0-gain) * newValue;
+	}
   }
-  
-  event void LplInfo.record() {
-    float spent;
-    
-    float energyScaleFactor = 1.0;
-    
-    // first condition for when mote start, second for when it dies
-    if(lastEnergy==0 || call SoftwareEnergy.used()==0) {
-      lastEnergy = call SoftwareEnergy.used();
-      return;
-    }
-    
-    spent = get_spent() * energyScaleFactor;
-	
-    // idle event
-    if(nextState==S_IDLE || (nextState==S_RECEIVE && receivedSinceLast==0)) {
-      handleIdle(spent);
-      prevState = S_IDLE;
-      // receive event
-    } else if(nextState==S_RECEIVE) {
-      handleReceive(spent);		
-      prevState = S_RECEIVE;
-      // transmit event
-    } else if(nextState==S_TRANSMIT) {
-      handleTransmit(spent);
-      prevState = S_TRANSMIT;
-    } else {
-      debug("MoteStats,UNKNOWN", "Unknown state with spent %f\n", spent);
-    }
-    
-    prevEnergy = spent;
-    receivedSinceLast = wakeUpSinceLast = 0;
-    nextPenalty = 0.0;
-    nextState = S_UNKNOWN;
-  }
-  
-  event void LplInfo.nextReceive() {
-    nextState = S_RECEIVE;
-  }
-  
-  event void LplInfo.nextTransmit() {
-    nextState = S_TRANSMIT;
-  }
-  
-  event void LplInfo.nextTransmitTakeover() {
-    if(prevState==S_IDLE || prevState==S_RECEIVE) {
-      debug("MoteStats,CUTOFF", "Cutoff with prevState %hhu and nextPenalty %f\n", prevState, nextPenalty);
-    }
-	
-    if(prevState==S_IDLE && idleEnergy>prevEnergy) {
-      nextPenalty = idleEnergy - prevEnergy;
-    } else if(prevState==S_RECEIVE && receiveEnergy>prevEnergy) {
-      nextPenalty = receiveEnergy - prevEnergy;
-    } else {
-      nextPenalty = 0.0;
-    }
-    
-    nextState = S_TRANSMIT;
-  }
-  
-  event void LplInfo.nextIdle() {
-    nextState = S_IDLE;
-  }
-  
-  event void AppInfo.generated() {
-    updatePI(FALSE); // update PI with active state
-    updatePR(FALSE);
-	
-    /* Removed after introduction of PR
-       if(receiveCounter<MAX_COUNTER) receiveCounter++;
-       receiveEnergy = ewma_counter(receiveEnergy, PACKET_GENERATION_EST, receiveCounter);*/
-    
-    debug("MoteStats,GENERATED", "Packet Generated\n");
-    //printf("GENERATED e:%lu, est:%lu\n", (uint32_t)(PACKET_GENERATION_EST*PRECISION), (uint32_t)(receiveEnergy*PRECISION));
-  }
-  
-  event void LplInfo.received() {
-    updatePI(FALSE); // update PI with active state
-    updatePR(TRUE);
-    receivedSinceLast++;
-    debug("MoteStats,RECEIVED", "Packet Received\n");
-  }
-  
-  event void LplInfo.wakeUp() {
-    wakeUpSinceLast++;
-  }
-  
-  command float MoteStats.getPI() {
-    return (pi*100.0);
-  }
-  
-  command float MoteStats.getPR() {
-    return (pr*100.0);
-  }
-  
-  command float MoteStats.getEI() {
-    return idleCounter>=MATURE_COUNTER? idleEnergy : 0.0;
-  }
-  
-  command float MoteStats.getET() {
-    return transmitCounter>=MATURE_COUNTER ? transmitEnergy : 0.0;
-  }
-  
-  command float MoteStats.getER() {
-    return receiveCounter>=MATURE_COUNTER ? receiveEnergy : 0.0;
-  }
-  
+
   
 }

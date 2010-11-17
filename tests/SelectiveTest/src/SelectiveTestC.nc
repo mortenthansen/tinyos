@@ -20,7 +20,7 @@ implementation {
     SoftwareEnergyC,
     SelectiveForwardingP as Selective,
     MoteStatsP as MoteStats,
-    DefaultLplC,
+    CC2420ActiveMessageC,
     TestSensorC;
 
   App.Boot -> MainC;
@@ -48,12 +48,11 @@ implementation {
 
   MainC.SoftwareInit -> MoteStats;
   MoteStats.AppInfo -> App;
-  MoteStats.LplInfo -> DefaultLplC;
+  MoteStats.LplInfo -> CC2420ActiveMessageC;
   MoteStats.SoftwareEnergy -> SoftwareEnergyC;
 
   components
-    new RadioSoftwareEnergyC(19600, 17040),
-    CC2420ActiveMessageC;
+    new RadioSoftwareEnergyC(19600, 17040);
   RadioSoftwareEnergyC.RadioInfo -> CC2420ActiveMessageC;
 
   components
