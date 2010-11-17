@@ -1,0 +1,22 @@
+COMPONENT=src/PacketLinkTestC
+
+CFLAGS += -Isrc
+
+##### Config #####
+
+CFLAGS += -DDELAY=0
+CFLAGS += -DRETRIES=10
+
+CFLAGS += -DPERIOD=1024
+CFLAGS += -DRECEIVER=0
+CFLAGS += -DCANCEL_DELAY=0
+
+##### End #####
+
+#CFLAGS += -DRF230_HARDWARE_ACK
+CFLAGS += -DPACKET_LINK
+
+BUILD_EXTRA_DEPS += 
+CLEAN_EXTRA = simbuild build doc app.xml 
+
+include $(MAKERULES)
