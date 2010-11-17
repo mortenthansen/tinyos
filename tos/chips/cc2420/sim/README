@@ -1,0 +1,19 @@
+***** tos/chips/cc2420/sim *****
+
+Implements CC2420 functionality for TOSSIM.  Supported features include:
+
+- Packet link layer functionality.
+- Duplicate detection.
+- Low power listening
+
+The only changed files compared to the original are:
+
+		MainC: removed the line that always includes TossimActiveMessageC			
+		ActiveMessageC: added the CC2420 send and receive layers
+		TossimRadioMsg.h: added packet link and lpl metadata
+		TossimPacketModelC: added the ChannelAccess interface to to check the channel for activity.
+		PowerCycleP: Changed the CCA checks to use a timer instead of synchronous checks which does not work with TOSSIM
+
+The number of CCA checks in PowerCycleP is measured based on simple time tests.  The length if the entire CCA check needs to be longer than the space between packet.
+
+
