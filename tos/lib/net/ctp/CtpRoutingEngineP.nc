@@ -485,6 +485,8 @@ implementation {
 
         congested = call CtpRoutingPacket.getOption(msg, CTP_OPT_ECN);
 
+        call CollectionDebug.logEventSimple(NET_C_TREE_RCV_BEACON, call AMPacket.source(msg));
+
         dbg("TreeRouting","%s from: %d  [ parent: %d etx: %d]\n",
             __FUNCTION__, from, 
             rcvBeacon->parent, rcvBeacon->etx);
