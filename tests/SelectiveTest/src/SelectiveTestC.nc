@@ -21,7 +21,9 @@ implementation {
     SelectiveForwardingP as Selective,
     MoteStatsP as MoteStats,
     CC2420ActiveMessageC,
-    TestSensorC;
+    TestSensorC,
+    new TimerMilliC() as LocalTimeTimer,
+    LocalTimeMilliC;
 
   App.Boot -> MainC;
   App.Leds -> Leds;
@@ -37,7 +39,9 @@ implementation {
   App.LowPowerListening -> ActiveMessageC;
 
   App.Sensor -> TestSensorC;
-  
+  App.LocalTimeTimer -> LocalTimeTimer;
+  App.LocalTime -> LocalTimeMilliC;
+
   Selective.SubSend -> StaticRouteC;
   Selective.SubReceive -> StaticRouteC;
   Selective.SubPacket -> StaticRouteC;

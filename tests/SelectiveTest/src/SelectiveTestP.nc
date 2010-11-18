@@ -27,6 +27,9 @@ module SelectiveTestP {
     interface LowPowerListening;
 	
     interface Read<uint16_t> as Sensor;
+
+    interface Timer<TMilli> as LocalTimeTimer;
+    interface LocalTime<TMilli>;
   }
 
 } implementation {
@@ -82,6 +85,8 @@ module SelectiveTestP {
       call LowPowerListening.setLocalWakeupInterval(0);
     }
 #endif
+
+    call LocalTimeTimer.startPeriodic(1024);
   }
   
   event void SerialControl.startDone(error_t error) {		
@@ -136,6 +141,8 @@ module SelectiveTestP {
   event void Send.sendDone(message_t* message, error_t err) {
     dataBusy = FALSE;
 
+      debug("App", "Send DONE.\n"); 
+
     if(DOUBLE_PACKET_SENDER!=0 && DOUBLE_PACKET_SENDER==TOS_NODE_ID && (counter%2)==1) {
       call Sensor.read();
     }
@@ -146,6 +153,12 @@ module SelectiveTestP {
   event message_t* Receive.receive(message_t* msg, void* payload, uint8_t len) {
     debug("App", "Message received\n");
     return msg;
+  }
+
+  /***************** LocalTimeTimer ****************/
+
+  event void LocalTimeTimer.fired() {
+    debug("LOCALTIME", "Localtime is %lu\n", call LocalTime.get());
   }
 		   
 }
