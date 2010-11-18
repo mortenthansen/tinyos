@@ -71,7 +71,7 @@ module SelectiveForwardingP {
     bool result;
     if(counter<MAX_COUNTER) counter++;
 	
-    if(TOS_NODE_ID==3) {
+    if(TOS_NODE_ID==1) {
 #ifdef SELECTIVE_FIXED_THRESHOLD//SELECTIVE_USE_FIXED
 #warning "***** Selective Using Fixed Threshold *****"
       result = fixedThreshold(call SelectivePacket.getImportance(msg));
