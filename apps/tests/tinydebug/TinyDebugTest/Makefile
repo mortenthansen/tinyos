@@ -1,0 +1,29 @@
+COMPONENT=src/DebugTestC
+CFLAGS += -Isrc
+
+##### CONFIG START #####
+
+#CFLAGS += -DPRINTF_BUFFER_SIZE=4000
+CFLAGS += -I$(TOSDIR)/lib/printf
+
+CFLAGS += -DDEBUG_LOGGER_SERIAL
+#CFLAGS += -DDEBUG_LOGGER_RADIO
+#CFLAGS += -DDEBUG_LOGGER_FLASH
+
+#CFLAGS += -DDEBUG_FILTER_LIST=\"App,\"
+CFLAGS += -DDEBUG_IGNORE_LIST=\"App,\"
+
+#CFLAGS += -DDEBUG_NO_AUTO_FLUSH
+#CFLAGS += -DDEBUG_BUFFER_SIZE=100
+
+##### CONFIG END #####
+
+CFLAGS += -I$(TOSDIR)/lib/tinydebug
+
+BUILD_EXTRA_DEPS += 
+
+CLEAN_EXTRA = *.class simbuild build doc app.xml Debug.java
+
+include $(MAKERULES)
+
+
