@@ -1,6 +1,13 @@
 <project name="tinyos-2.x support sdk java" default="all">
 
 	<property environment="env"/>
+  	<property name="lib" value="lib"></property>
+
+    <path id="_classpath">
+      <fileset dir="${lib}">
+        <include name="**/*.jar"/>
+      </fileset>
+    </path>
 	
 	<target name="all" >
 		<echo message = "Building support sdk java" />
@@ -31,7 +38,8 @@
 			<arg value="java" />
 			<arg path="${env.TOSDIR}/lib/serial/Serial.h" />
 			<arg value="serial_packet" />
-			<arg prefix="-I" path="${env.TOSDIR}/types" />
+			<arg value="-I" />
+			<arg path="${env.TOSDIR}/types" />
 		</exec>
 		<exec executable="mig" failonerror="true">
 			<arg value="-o" />
@@ -52,14 +60,22 @@
 	</target>
 	
 	<target name="compile" depends="init">
-		<javac srcdir="." classpath="" includeAntRuntime="false" />
+		<javac srcdir="." includeAntRuntime="false">
+        	<classpath> <path refid="_classpath"/> </classpath>
+        </javac>
 	</target>
 	
 	<target name="jar" depends="compile">
-		<jar destfile="tinyos.jar">
-			<fileset dir="." includes="**/*.class" />
-			<fileset dir="." includes="**/*.lib" />
-		</jar>
+      <manifestclasspath property="manifest-classpath" jarfile="tinyos.jar">
+        <classpath refid="_classpath" />
+      </manifestclasspath>
+	  <jar destfile="tinyos.jar">
+	    <manifest>
+	      <attribute name="Class-Path" value="${manifest-classpath}" />
+	    </manifest>
+		<fileset dir="." includes="**/*.class" />
+		<fileset dir="." includes="**/*.lib" />
+	  </jar>
 	</target>
 	
 	<target name="clean">
