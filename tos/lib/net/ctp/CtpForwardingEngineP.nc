@@ -430,6 +430,10 @@ implementation {
 	payload = call Packet.getPayload(loopbackMsgPtr, call Packet.payloadLength(loopbackMsgPtr));
 	payloadLength =  call Packet.payloadLength(loopbackMsgPtr);
         dbg("Forwarder", "%s: I'm a root, so loopback and signal receive.\n", __FUNCTION__);
+        call CollectionDebug.logEventMsg(NET_C_FE_DST_MSG,
+                                         call CollectionPacket.getSequenceNumber(loopbackMsgPtr), 
+                                         call CollectionPacket.getOrigin(loopbackMsgPtr), 
+                                         call CtpPacket.getThl(loopbackMsgPtr));
         loopbackMsgPtr = signal Receive.receive[collectid](loopbackMsgPtr,
 							   payload,
 							   payloadLength);
@@ -712,13 +716,17 @@ implementation {
     }
 
     // If I'm the root, signal receive. 
-    else if (call RootControl.isRoot())
+    else if (call RootControl.isRoot()) {
+      call CollectionDebug.logEventMsg(NET_C_FE_DST_MSG,
+                                       call CollectionPacket.getSequenceNumber(msg), 
+                                       call CollectionPacket.getOrigin(msg), 
+                                       thl--);
       return signal Receive.receive[collectid](msg, 
 					       call Packet.getPayload(msg, call Packet.payloadLength(msg)), 
 					       call Packet.payloadLength(msg));
     // I'm on the routing path and Intercept indicates that I
     // should not forward the packet.
-    else if (!signal Intercept.forward[collectid](msg, 
+    } else if (!signal Intercept.forward[collectid](msg, 
 						  call Packet.getPayload(msg, call Packet.payloadLength(msg)), 
 						  call Packet.payloadLength(msg)))
       return msg;
