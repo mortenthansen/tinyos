@@ -1,0 +1,32 @@
+COMPONENT=src/CollectionTestC
+
+CFLAGS += -Isrc
+
+##### CONFIG START #####
+
+CFLAGS += -DPERIOD=5120
+
+CFLAGS += -DROOT_NODE=0
+
+CFLAGS += -DDEBUG_LOGGER_SERIAL
+
+#CFLAGS += -DLOW_POWER_LISTENING
+CFLAGS += -DLPL_DEF_LOCAL_WAKEUP=512
+CFLAGS += -DLPL_DEF_REMOTE_WAKEUP=512
+
+##### CONFIG END #####
+
+CFLAGS += -I$(TOSDIR)/lib/tinydebug
+
+#CFLAGS += -DCC2420_DEF_RFPOWER=1 # 3, 7, 11, 15, 19, 23, 27, 31
+CFLAGS += -DCC2420_HW_ADDRESS_RECOGNITION
+
+CFLAGS += -I$(TOSDIR)/lib/net
+CFLAGS += -I$(TOSDIR)/lib/net/4bitle
+CFLAGS += -I$(TOSDIR)/lib/net/ctp
+CFLAGS += -I$(TOSDIR)/lib/serial
+
+BUILD_EXTRA_DEPS += 
+CLEAN_EXTRA = simbuild build doc app.xml Debug.java
+
+include $(MAKERULES)
