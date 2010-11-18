@@ -127,7 +127,7 @@ implementation {
 
         dbg("Serial", "Sending serial message (%p) of type %hhu and length %hhu @ %s.\n",
             msg, call AMPacket.type(msg), len, sim_time_string());
-        sim_sf_dispatch_packet((void*)msg, len);
+        sim_sf_dispatch_packet((void*)getHeader(msg), len);
         
         post modelSendDone ();
 
