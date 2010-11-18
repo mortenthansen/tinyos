@@ -76,7 +76,7 @@ module CC2420TransmitC {
   }
   
   command bool EnergyIndicator.isReceiving() {
-    return !call ChannelAccess.clearChannel(0);
+    return !call ChannelAccess.clearChannel();
   }
   
   command bool ByteIndicator.isReceiving() {

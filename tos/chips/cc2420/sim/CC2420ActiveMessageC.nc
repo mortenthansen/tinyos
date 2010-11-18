@@ -56,7 +56,7 @@ configuration CC2420ActiveMessageC {
   }
 } implementation {
 
-  components TossimActiveMessageC as AM;
+  components new TossimActiveMessageC() as AM;
   components TossimRadioC as Radio;
 
   components ActiveMessageAddressC as Address;
