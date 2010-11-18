@@ -1,0 +1,27 @@
+
+ifndef
+	TINYDEBUG_JAVAFILE = Debug.java
+endif
+
+CFLAGS += -DDEBUG
+
+DEBUG_GREP := '\btinydebug\(\s*[0-9]+[^;]*'
+# for MAC compatibility we leave out \n and \t in the sed formatting
+DEBUG_SED := 's/tinydebug(\([0-9]*\)U, "\([^"]*\)", "\([^"]*\)".*/channelMap.put("\1","\2");formatMap.put("\1","\3");/'
+
+tinydebug: FORCE
+	@echo "    extracting debug information from $(BUILDDIR)/app.c to $(TINYDEBUG_JAVAFILE)"	
+	@echo "import java.util.HashMap;\n" > $(TINYDEBUG_JAVAFILE)
+	@echo "public class Debug implements net.tinyos.tools.DebugProgram {\n" >> $(TINYDEBUG_JAVAFILE)
+	@echo "\tprivate HashMap<String,String> channelMap;" >> $(TINYDEBUG_JAVAFILE)
+	@echo "\tprivate HashMap<String,String> formatMap;" >> $(TINYDEBUG_JAVAFILE)
+	@echo "\n\tpublic Debug() {" >> $(TINYDEBUG_JAVAFILE)
+	@echo "\t\tchannelMap = new HashMap<String,String>();" >> $(TINYDEBUG_JAVAFILE)
+	@echo "\t\tformatMap = new HashMap<String,String>();" >> $(TINYDEBUG_JAVAFILE)
+	cat $(BUILDDIR)/app.c | grep -o -E $(DEBUG_GREP) | sed $(DEBUG_SED) >> $(TINYDEBUG_JAVAFILE)
+	@echo "\t}" >> $(TINYDEBUG_JAVAFILE)
+	@echo "\n\tpublic HashMap<String,String> getChannelMap() {\n\t\t return channelMap; \n\t}" >> $(TINYDEBUG_JAVAFILE)
+	@echo "\n\tpublic HashMap<String,String> getFormatMap() {\n\t\t return formatMap; \n\t}" >> $(TINYDEBUG_JAVAFILE)
+	@echo "\n}" >> $(TINYDEBUG_JAVAFILE)	
+	@echo "    compiling debug information in $(TINYDEBUG_JAVAFILE)"
+	javac -cp ${TOSCONTRIB}/csau/tinydebug/support/sdk/java/tinyos-tinydebug.jar $(TINYDEBUG_JAVAFILE)
