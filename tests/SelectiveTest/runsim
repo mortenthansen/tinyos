@@ -3,8 +3,9 @@
 ###### CONFIG START ######
 LPL=512
 PERIOD=2048
-ENERGY=200
-FOLDER=2b_smallramp1to128_lpl${LPL}_delay10_period${PERIOD}_init9_battery$ENERGY
+ENERGY=600
+NODE=1
+FOLDER=1b_smallramp1to128_lpl${LPL}_delay10_period${PERIOD}_init9_battery$ENERGY
 
 let MAX_ENERGY=$ENERGY*65768
 
@@ -28,7 +29,7 @@ fi
 ##### RUN TESTS #####
 
 #for ((t=10; t<=1; t=t+1))
-for ((t=-1; t<=5; t=t+1))
+for ((t=-1; t<=6; t=t+1))
 do
 v=-1
 if [ "$t" -eq "$v" ]
@@ -42,16 +43,14 @@ fi
 
 echo $threshold
 
-#TODO: run this config and compare results to paper results 
-
 #for ((run=10; run<=1; run=run+1))
 for ((run=1; run<=5; run=run+1))
 do
 
-java net.tinyos.tools.DebugClient -comm sf@localhost:9002 > matlab/$FOLDER/threshold${threshold}_run${run}.log &
+java net.tinyos.tools.DebugClient -comm sf@localhost:9002 2> /dev/null > matlab/$FOLDER/threshold${threshold}_run${run}.log &
 #python sim.py | grep --line-buffered "Energy used" | sed --unbuffered 's/[^:]*[^0-9]*\([0-9]*\)/\1/' | {
 
-python sim.py | sed --unbuffered -n 's/.*Energy used \([0-9]*\)/\1/p' | {
+python sim.py | sed --unbuffered -n 's/DEBUG ('${NODE}'): Energy used \([0-9]*\)/\1/p' | {
 
 while read line
 do
