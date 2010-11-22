@@ -60,7 +60,7 @@ implementation
 
 	async command bool PacketFlag.get[uint8_t bit](message_t* msg)
 	{
-		return getMeta(msg)->flags & (1<<bit);
+		return getMeta(msg)->flags & (1<<bit) ? TRUE : FALSE;
 	}
 
 	async command void PacketFlag.set[uint8_t bit](message_t* msg)
