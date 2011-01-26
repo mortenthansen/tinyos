@@ -1,0 +1,6 @@
+COMPONENT=PrintfTestC
+
+CFLAGS += -DDEBUG_LOGGER_SERIAL
+CFLAGS += -I$(TOSDIR)/lib/tinydebug
+
+include $(MAKERULES)
