@@ -29,7 +29,7 @@
 #include "UDPReport.h"
 #include "PrintfUART.h"
 
-#define REPORT_PERIOD 75L
+#define REPORT_PERIOD 2L
 
 module UDPEchoP {
   uses {
