@@ -44,12 +44,10 @@ configuration BlockingUdpC {
 } implementation {
 
   components
-    IPDispatchC,
-    new BlockingStdControlC(),
+    RadioC,
     BlockingUdpP;
     
-  BlockingStdControlC.SplitControl -> IPDispatchC;
-  BlockingStdControl = BlockingStdControlC;
+  BlockingStdControl = RadioC;
   UdpPacket = BlockingUdpP;
 
 
