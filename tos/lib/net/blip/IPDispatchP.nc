@@ -265,7 +265,7 @@ module IPDispatchP {
 
     call ExpireTimer.startPeriodic(FRAG_EXPIRE_TIME);
 
-    call SplitControl.start();
+    //call SplitControl.start();
     return;
   }
 
