@@ -220,11 +220,12 @@ module IPDispatchP {
 #define SENDINFO_DECR(X) if (--((X)->refcount) == 0) call SendInfoPool.put(X)
 
   command error_t SplitControl.start() {
-    return call RadioControl.start();
+    //return call RadioControl.start();
+    return SUCCESS;
   }
 
   command error_t SplitControl.stop() {
-    if (!radioBusy) {
+    /*if (!radioBusy) {
       state = S_STOPPED;
       return call RadioControl.stop();
     } else {
@@ -232,7 +233,8 @@ module IPDispatchP {
       // stopping
       state = S_STOPPING;
       return SUCCESS;
-    }
+      }*/
+    return SUCCESS;
   }
 
   event void RadioControl.startDone(error_t error) {
@@ -242,11 +244,13 @@ module IPDispatchP {
     if (error == SUCCESS) {
       call ICMP.sendSolicitations();
       state = S_RUNNING;
+      post sendTask();
     }
     signal SplitControl.startDone(error);
   }
 
   event void RadioControl.stopDone(error_t error) {
+    state = S_STOPPED;
     signal SplitControl.stopDone(error);
   }
 
