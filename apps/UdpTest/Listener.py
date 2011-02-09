@@ -26,15 +26,18 @@ if __name__ == '__main__':
     rsock.bind(('', port))
 
     while True:
-        data, addr = rsock.recvfrom(1024)
-        if (len(data) > 0):
+        pdata, addr = rsock.recvfrom(1024)
+        if (len(pdata) > 0):
             
+            data = unpack(pdata)
+
             print addr
-            print "incomming:", data
-            print "data:", unpack(data)
-            print "packed:", pack([42, 67])
-            
-            ssock.sendto(pack([51, 52]),("fec0::3", 7000))
+            print "incomming:", pdata
+            print "data:", data
+            if data[0]==42:
+                print "Responding..."
+                ssock.sendto(pack([51, 52]),("fec0::3", 7000))
+
             
             
             
