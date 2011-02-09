@@ -11,7 +11,7 @@ CFLAGS += -DNO_IP_MALLOC
 # very convenient for forwarding, and means we don't have to do a
 # memmove.  This doesn't mean that motes running blip also need this--
 # they can use IFRAMES or IEEE154FRAMES
-CFLAGS += -DIEEE154FRAMES_ENABLED
+#CFLAGS += -DIEEE154FRAMES_ENABLED
 
 # if you're worried about your interface mote crashing, enable this to
 # turn on a hardware watchdog that will reset it if it does.  CFLAGS
