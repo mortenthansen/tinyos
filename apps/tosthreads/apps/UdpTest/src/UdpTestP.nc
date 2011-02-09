@@ -1,5 +1,3 @@
-#include <ip.h>
-#include <lib6lowpan.h>
 #include "Udp.h"
 #include "printf.h"
 
