@@ -318,6 +318,11 @@ implementation {
   
   default event void SplitControl.stopDone(error_t error) {
   }
+
+  default event void LplInfo.radioOff() {}
+  default event void LplInfo.energyDetected() {}
+  default event void LplInfo.wakeUp() {}
+
 }
 
 

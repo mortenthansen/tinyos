@@ -395,6 +395,7 @@ implementation {
   }
   
   /***************** Functions ***************/
+
   void initializeSend() {
     if(call LowPowerListening.getRemoteWakeupInterval(currentSendMsg) 
       > ONE_MESSAGE) {
@@ -417,6 +418,15 @@ implementation {
   void startOffTimer() {
     call OffTimer.startOneShot(call SystemLowPowerListening.getDelayAfterReceive());
   }
-  
+
+  /***************** Defaults ***************/
+
+  default event void LplInfo.transmit() {}
+  default event void LplInfo.received() {}
+
+  default async event void RadioInfo.rx() {}
+  default async event void RadioInfo.off() {}
+
+
 }
 
