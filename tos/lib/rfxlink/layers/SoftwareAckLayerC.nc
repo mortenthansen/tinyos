@@ -83,6 +83,7 @@ implementation
 		{
 			if( (error = call SubSend.send(msg)) == SUCCESS )
 			{
+				dbg("SoftAck.error", "SoftAck: sending message\n");
 				call AckReceivedFlag.clear(msg);
 				state = STATE_DATA_SEND;
 				txMsg = msg;
@@ -98,6 +99,7 @@ implementation
 	{
 		if( state == STATE_ACK_SEND )
 		{
+			dbg("SoftAck.debug", "SoftAck: ACK sent\n");
 			// TODO: what if error != SUCCESS
 			RADIO_ASSERT( error == SUCCESS );
 
@@ -110,11 +112,13 @@ implementation
 
 			if( error == SUCCESS && call Config.requiresAckWait(txMsg) && call RadioAlarm.isFree() )
 			{
+				dbg("SoftAck.debug", "SoftAck: data sent, waiting for ACK @ %s...\n", sim_time_string());
 				call RadioAlarm.wait(call Config.getAckTimeout());
 				state = STATE_ACK_WAIT;
 			}
 			else
 			{
+				dbg("SoftAck.debug", "SoftAck: data sent without ACK request...\n");
 				state = STATE_READY;
 				signal RadioSend.sendDone(error);
 			}
@@ -123,6 +127,7 @@ implementation
 
 	tasklet_async event void RadioAlarm.fired()
 	{
+		dbg("SoftAck.debug", "SoftAck: ACK timeout\n");
 		RADIO_ASSERT( state == STATE_ACK_WAIT );
 
 		call Config.reportChannelError();
@@ -135,7 +140,7 @@ implementation
 	{
 		// drop unexpected ACKs
 		if( call Config.isAckPacket(msg) )
-			return state == STATE_ACK_WAIT;
+			return state == STATE_ACK_WAIT && call Config.verifyAckPacket(txMsg, msg);
 
 		// drop packets that need ACKs while waiting for our ACK
 //		if( state == STATE_ACK_WAIT && call Config.requiresAckWait(msg) )
@@ -152,18 +157,30 @@ implementation
 		{
 			if( state == STATE_ACK_WAIT && call Config.verifyAckPacket(txMsg, msg) )
 			{
+				dbg("SoftAck.debug", "SoftAck: receiving ACK @ %s \n", sim_time_string());
 				call RadioAlarm.cancel();
 				call AckReceivedFlag.set(txMsg);
 
 				state = STATE_READY;
 				signal RadioSend.sendDone(SUCCESS);
+			} 
+			else 
+			{
+				dbg("SoftAck.error", "SoftAck: received unexpected ACK @ %s \n", sim_time_string());
 			}
 
 			return msg;
 		}
 
+		if( state != STATE_READY && call Config.requiresAckReply(msg) )
+		{
+			dbg("SoftAck.debug", "SoftAck: ignoring requested ACK, im waiting for my own.. \n", sim_time_string());
+		}
+
 		if( state == STATE_READY && call Config.requiresAckReply(msg) )
 		{
+			dbg("SoftAck.debug", "SoftAck: sending ACK @ %s \n", sim_time_string());
+
 			call Config.createAckPacket(msg, &ackMsg);
 
 			// TODO: what to do if we are busy and cannot send an ack
