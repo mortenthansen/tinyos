@@ -85,6 +85,14 @@ configuration RF230DriverLayerC {
   Driver.Model -> Model;
   Driver.AckReceivedFlag = AckReceivedFlag;
 
+#ifdef SOFTWAREENERGY
+  components 
+    new SoftwareEnergyStateC(3000, 15500) as ReceiveEnergyState,
+    new SoftwareEnergyStateC(3000, 16500) as TransmitEnergyState;
+  Driver.ReceiveEnergyState -> ReceiveEnergyState;
+  Driver.TransmitEnergyState -> TransmitEnergyState;
+#endif
+
   RadioState = Driver;
   RadioSend = Driver;
   RadioReceive = Driver;

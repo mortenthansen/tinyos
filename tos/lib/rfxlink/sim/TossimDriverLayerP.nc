@@ -68,6 +68,11 @@ generic module TossimDriverLayerP(bool tossimHardwareAddressMatch, bool tossimHa
     interface LocalTime<TRadio>;
 
     interface GainRadioModel as Model;
+
+#ifdef SOFTWAREENERGY
+    interface SoftwareEnergyState as ReceiveEnergyState;
+    interface SoftwareEnergyState as TransmitEnergyState;
+#endif
   }
 
 } implementation {
@@ -118,6 +123,11 @@ generic module TossimDriverLayerP(bool tossimHardwareAddressMatch, bool tossimHa
       dbgerror("Driver.error", "Driver: already OFF\n");
       return EALREADY;
     } else {
+#ifdef SOFTWAREENERGY
+      if(!transmitting) {
+        call ReceiveEnergyState.off();
+      }
+#endif
       running = FALSE;
       dbg("Driver.debug", "Driver: turning radio OFF @ %lu\n", (call LocalTime.get()*1000UL)/(1024UL*1024UL));
       post stateDoneTask();
@@ -136,6 +146,9 @@ generic module TossimDriverLayerP(bool tossimHardwareAddressMatch, bool tossimHa
       dbgerror("Driver.error", "Driver: already ON\n");
       return EALREADY;
     } else {
+#ifdef SOFTWAREENERGY
+      call ReceiveEnergyState.on();
+#endif
       running = TRUE;
       dbg("Driver.debug", "Driver: turning radio ON @ %lu\n", (call LocalTime.get()*1000UL)/(1024UL*1024UL));
       post stateDoneTask();
@@ -159,6 +172,12 @@ generic module TossimDriverLayerP(bool tossimHardwareAddressMatch, bool tossimHa
     sending = NULL;
     transmitting = FALSE;
     dbg("Driver.debug", "Driver: Transmission DONE @ %lu\n", (call LocalTime.get()*1000UL)/(1024UL*1024UL));
+#ifdef SOFTWAREENERGY
+    call TransmitEnergyState.off();
+    if(running) {
+      call ReceiveEnergyState.on();
+    }
+#endif
     signal RadioSend.sendDone(running ? SUCCESS : EOFF);
   }
 
@@ -197,6 +216,10 @@ generic module TossimDriverLayerP(bool tossimHardwareAddressMatch, bool tossimHa
 
     dbg("Driver.debug", "Driver: Transmission time %llu us...\n", (duration*1000000ULL)/sim_ticks_per_sec() );
 
+#ifdef SOFTWAREENERGY
+    call ReceiveEnergyState.off();
+    call TransmitEnergyState.on();
+#endif
 
     sim_queue_insert(evt);
   }
