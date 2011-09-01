@@ -94,6 +94,36 @@ interface Ieee154PacketLayer
 	async command bool verifyAckReply(message_t* data, message_t* ack);
 
 	/**
+	 * Returns TRUE if the message is a data acknowledgement frame supported
+	 * by this interface (based on the value of the FCF).
+	 */
+	async command bool isDataAckFrame(message_t* msg, uint8_t dataLength);
+
+	/**
+	 * Sets the FCF to create a data acknowledgement frame supported by
+	 * this interface. You may call setFramePending after this.
+	 */
+	async command void createDataAckFrame(message_t* msg, uint8_t dataLength);
+
+	/**
+	 * Creates a data acknowledgement packet for the given data packet.
+	 * This also sets the DSN value. The data message must be a 
+	 * data frame, the ack message will be overwritten.
+	 */
+	async command void createDataAckReply(message_t* data, message_t* ack, uint8_t dataLength);
+
+	/**
+	 * Returns TRUE if the data acknowledgement packet corresponds to the
+	 * data packet. The data message must be a data packet.
+	 */
+	async command bool verifyDataAckReply(message_t* data, message_t* ack, uint8_t dataLength);
+
+    /**
+	 * Returns the ACK data of the given data acknowledgement message
+	 */
+    async command void* getAckData(message_t* ack, uint8_t dataLength);
+
+	/**
 	 * Returns TRUE if the ACK required field is set in the FCF.
 	 */
 	async command bool getAckRequired(message_t* msg);

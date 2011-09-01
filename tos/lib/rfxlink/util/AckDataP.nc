@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 Aarhus University
+ * Copyright (c) 2009 Aarhus University
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,21 +30,43 @@
  */
 
 /**
- * @author Morten Tranberg Hansen
- * @date   November 24 2010
+ * @author Morten Tranberg Hansen <mth at cs dot au dot dk>
+ * @date   August 19 2009
  */
 
-#ifndef __RF230RADIO_H__
-#define __RF230RADIO_H__
+#include <Tasklet.h>
 
-#define UQ_RF230_ACKDATA_BYTES "RF230DataAckLayer.Bytes"
+generic module AckDataP(typedef data_t, uint8_t offset, uint8_t maxOffset) @safe() {
+  
+  provides {
+    interface AckData<data_t>;
+  }
+  
+  uses {
+    interface DataAck;
+  }
+  
+} implementation {
 
-typedef struct rf230_ackdata {
-  uint8_t bytes[uniqueCount(UQ_RF230_ACKDATA_BYTES)];
-} rf230_ackdata_t;
+  /***************** AckData ****************/
+  
+  tasklet_async command data_t*  AckData.getData() {
+    uint8_t* data = (uint8_t*) call DataAck.getData();
+    return TCAST(data_t* BND(data,data+maxOffset), data+offset);
+  }
+  
+  tasklet_async event void DataAck.requestData(am_addr_t destination) {
+    signal AckData.requestData(destination);
+  }
+  
+  tasklet_async event void DataAck.dataAvailable(am_addr_t source, void* data, uint8_t length) {
+    uint8_t* d = (uint8_t*) data;
+    signal AckData.dataAvailable(source, TCAST(data_t* BND(d,d+maxOffset), d+offset));
+  }
 
-#if defined(RF230_HARDWARE_ACK)
-#warning "*** USING HARDWARE ACKNOWLEDGEMENTS"
-#endif
+  /***************** Defaults ****************/
 
-#endif
+  default tasklet_async event void AckData.requestData(uint16_t destination) {}
+  default tasklet_async event void AckData.dataAvailable(uint16_t source, data_t* data) {}
+
+}

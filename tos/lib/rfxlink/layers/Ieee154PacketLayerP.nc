@@ -69,6 +69,11 @@ implementation
 		IEEE154_DATA_FRAME_PRESERVE = (1 << IEEE154_FCF_ACK_REQ) 
 			| (1 << IEEE154_FCF_FRAME_PENDING),
 
+		IEEE154_DATAACK_FRAME_VALUE = (IEEE154_TYPE_DATA << IEEE154_FCF_FRAME_TYPE) 
+			| (0 << IEEE154_FCF_INTRAPAN) 
+			| (IEEE154_ADDR_NONE << IEEE154_FCF_DEST_ADDR_MODE) 
+			| (IEEE154_ADDR_NONE << IEEE154_FCF_SRC_ADDR_MODE),
+
 		IEEE154_ACK_FRAME_LENGTH = 3,	// includes the FCF, DSN
 		IEEE154_ACK_FRAME_MASK = (IEEE154_TYPE_MASK << IEEE154_FCF_FRAME_TYPE), 
 		IEEE154_ACK_FRAME_VALUE = (IEEE154_TYPE_ACK << IEEE154_FCF_FRAME_TYPE),
@@ -127,6 +132,45 @@ implementation
 
 		return header->dsn == getHeader(data)->dsn
 			&& (header->fcf & IEEE154_ACK_FRAME_MASK) == IEEE154_ACK_FRAME_VALUE;
+	}
+
+	async command bool Ieee154PacketLayer.isDataAckFrame(message_t* msg, uint8_t dataLength)
+	{
+		// TODO: check length
+		return (getHeader(msg)->fcf & IEEE154_DATA_FRAME_MASK) == IEEE154_DATAACK_FRAME_VALUE;
+	}
+
+	async command void Ieee154PacketLayer.createDataAckFrame(message_t* msg, uint8_t dataLength)
+	{
+		call SubPacket.setPayloadLength(msg, IEEE154_ACK_FRAME_LENGTH + dataLength);
+		getHeader(msg)->fcf = IEEE154_DATAACK_FRAME_VALUE;
+	}
+
+	async command void Ieee154PacketLayer.createDataAckReply(message_t* data, message_t* ack, uint8_t dataLength)
+	{
+		ieee154_simple_header_t* header = getHeader(ack);
+		call SubPacket.setPayloadLength(ack, IEEE154_ACK_FRAME_LENGTH + dataLength);
+
+		header->fcf = IEEE154_DATAACK_FRAME_VALUE;
+		header->dsn = getHeader(data)->dsn;
+	}
+
+	async command bool Ieee154PacketLayer.verifyDataAckReply(message_t* data, message_t* ack, uint8_t dataLength)
+	{
+		ieee154_simple_header_t* header = getHeader(ack);
+
+		// TODO: check length
+		return header->dsn == getHeader(data)->dsn
+			&& (header->fcf & IEEE154_DATA_FRAME_MASK) == IEEE154_DATAACK_FRAME_VALUE;
+	}
+
+	async command void* Ieee154PacketLayer.getAckData(message_t* ack, uint8_t dataLength) 
+	{
+		ieee154_simple_header_t* header = getHeader(ack);
+		if( call SubPacket.payloadLength(ack) >= IEEE154_ACK_FRAME_LENGTH+dataLength ) 
+			return ((uint8_t*)header) + IEEE154_ACK_FRAME_LENGTH;
+		else
+			return NULL;
 	}
 
 	async command bool Ieee154PacketLayer.getAckRequired(message_t* msg)

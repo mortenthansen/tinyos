@@ -14,4 +14,7 @@ typedef uint16_t tradio_size;
 
 #define RADIO_ALARM_MILLI_EXP 10
 
+// RADIO_ALARM_BYTE = 8 * RADIO_ALARM_SEC / (BITS_PER_SYMBOL * SYMBOLS_PER_SEC) = 8 * 1024*1024 / (4 * 65536)
+#define RADIO_ALARM_BYTE 32 
+
 #endif

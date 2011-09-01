@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 Aarhus University
+ * Copyright (c) 2009 Aarhus University
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,21 +30,35 @@
  */
 
 /**
- * @author Morten Tranberg Hansen
- * @date   November 24 2010
+ * @author Morten Tranberg Hansen <mth at cs dot au dot dk>
+ * @date   August 19 2009
  */
 
-#ifndef __RF230RADIO_H__
-#define __RF230RADIO_H__
+#include <Tasklet.h>
 
-#define UQ_RF230_ACKDATA_BYTES "RF230DataAckLayer.Bytes"
+interface DataAck {
 
-typedef struct rf230_ackdata {
-  uint8_t bytes[uniqueCount(UQ_RF230_ACKDATA_BYTES)];
-} rf230_ackdata_t;
+  /**
+   * Get the current data
+   */
+  tasklet_async command void* getData();
 
-#if defined(RF230_HARDWARE_ACK)
-#warning "*** USING HARDWARE ACKNOWLEDGEMENTS"
-#endif
+  /**
+   * Get the length of the current data
+   */
+  tasklet_async command uint8_t dataLength();
 
-#endif
+  /**  
+   * Request for data
+   * Reply through getData() and dataLength()
+   */
+  tasklet_async event void requestData(uint16_t destination);
+
+  /**
+   * New incomming data available.
+   * @param data pointer to the incomming data
+   * @param length of incomming data
+   */
+  tasklet_async event void dataAvailable(uint16_t source, void* data, uint8_t length);
+
+}

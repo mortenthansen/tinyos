@@ -37,11 +37,12 @@
 #include <RadioConfig.h>
 #include <Tasklet.h>
 
-generic module TossimRadioP()
+generic module TossimRadioP(uint8_t ackDataLength)
 {
 	provides
 	{
 		interface SoftwareAckConfig;
+		interface DataAckConfig;
 		interface UniqueConfig;
 		interface CsmaConfig;
 		interface TrafficMonitorConfig;
@@ -114,6 +115,66 @@ implementation
 #ifdef TRAFFIC_MONITOR
 //		signal TrafficMonitorConfig.channelError();
 #endif
+	}
+
+/*----------------- DataAckConfig -----------------*/
+
+	async command bool DataAckConfig.requiresAckWait(message_t* msg)
+	{
+		return call Ieee154PacketLayer.requiresAckWait(msg);
+	}
+
+	async command bool DataAckConfig.isAckPacket(message_t* msg)
+	{
+		return call Ieee154PacketLayer.isDataAckFrame(msg, call DataAckConfig.ackDataLength());
+	}
+
+	async command bool DataAckConfig.verifyAckPacket(message_t* data, message_t* ack)
+	{
+		return call Ieee154PacketLayer.verifyDataAckReply(data, ack, call DataAckConfig.ackDataLength());
+	}
+
+	async command void DataAckConfig.setAckRequired(message_t* msg, bool ack)
+	{
+		call Ieee154PacketLayer.setAckRequired(msg, ack);
+	}
+
+	async command bool DataAckConfig.requiresAckReply(message_t* msg)
+	{
+		return call Ieee154PacketLayer.requiresAckReply(msg);
+	}
+
+	async command void DataAckConfig.createAckPacket(message_t* data, message_t* ack)
+	{
+		call Ieee154PacketLayer.createDataAckReply(data, ack, call DataAckConfig.ackDataLength());
+	}
+
+	async command uint16_t DataAckConfig.getAckTimeout()
+	{
+		return (uint16_t)(SOFTWAREACK_TIMEOUT * RADIO_ALARM_MICROSEC + ackDataLength * RADIO_ALARM_BYTE);
+	}
+
+	tasklet_async command void DataAckConfig.reportChannelError()
+	{
+#ifdef TRAFFIC_MONITOR
+		signal TrafficMonitorConfig.channelError();
+#endif
+	}
+
+	async command uint16_t DataAckConfig.getDestAddr(message_t* msg) {
+		return call Ieee154PacketLayer.getDestAddr(msg);
+	}
+
+	async command uint16_t DataAckConfig.getSrcAddr(message_t* msg) {
+		return call Ieee154PacketLayer.getSrcAddr(msg);
+	}
+
+	async command void* DataAckConfig.getAckData(message_t* ack) {
+		return call Ieee154PacketLayer.getAckData(ack, call DataAckConfig.ackDataLength());
+	}
+
+	async command uint8_t DataAckConfig.ackDataLength() {
+		return ackDataLength;
 	}
 
 /*----------------- UniqueConfig -----------------*/
@@ -310,12 +371,12 @@ implementation
 
 	command uint16_t LowPowerListeningConfig.getListenLength()
 	{
-		return 5;
+		return 5 + (TOSH_DATA_LENGTH * RADIO_ALARM_BYTE + call DataAckConfig.ackDataLength() * RADIO_ALARM_BYTE + 512)/1024;
 	}
 
 	async command uint16_t RandomCollisionConfig.getMinimumBackoff()
 	{
-		return (uint16_t)(320 * RADIO_ALARM_MICROSEC);
+		return (uint16_t)(320 * RADIO_ALARM_MICROSEC + (TOSH_DATA_LENGTH + call DataAckConfig.ackDataLength()) * RADIO_ALARM_BYTE);
 	}
 
 	async command uint16_t RandomCollisionConfig.getInitialBackoff(message_t* msg)

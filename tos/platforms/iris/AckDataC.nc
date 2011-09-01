@@ -31,20 +31,39 @@
 
 /**
  * @author Morten Tranberg Hansen
- * @date   November 24 2010
+ * @date   December 29 2010
  */
 
-#ifndef __RF230RADIO_H__
-#define __RF230RADIO_H__
+generic configuration AckDataC(typedef data_t) {
 
-#define UQ_RF230_ACKDATA_BYTES "RF230DataAckLayer.Bytes"
+  provides {
+    interface AckData<data_t>;
+  }
 
-typedef struct rf230_ackdata {
-  uint8_t bytes[uniqueCount(UQ_RF230_ACKDATA_BYTES)];
-} rf230_ackdata_t;
+} implementation {
 
-#if defined(RF230_HARDWARE_ACK)
-#warning "*** USING HARDWARE ACKNOWLEDGEMENTS"
+  enum {
+    RF230_OFFSET = uniqueN(UQ_RF230_ACKDATA_BYTES, sizeof(data_t)),
+    RF230_MAX_OFFSET = uniqueCount(UQ_RF230_ACKDATA_BYTES),
+  };
+
+  /*
+#if !defined(RF230_HARDWARE_ACK) && defined(RF230_DATA_ACK)
+  components  RF230RadioC as DataAckC;
+#else
+  components new DummyDataAckLayerC(data_t) as DataAckC;
+#endif
+  */
+
+#if !defined(RF230_HARDWARE_ACK) && defined(RF230_DATA_ACK)
+  components  RF230RadioC;
+  components 
+    new AckDataP(data_t, RF230_OFFSET, RF230_MAX_OFFSET);
+  AckDataP.DataAck -> RF230RadioC;
+#else
+  components new DummyAckDataP(data_t) as AckDataP;
 #endif
 
-#endif
+  AckData = AckDataP;
+
+}
