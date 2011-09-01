@@ -20,6 +20,13 @@ t.addChannel("App", sys.stdout);
 #t.addChannel("RadioAlarm.debug", sys.stdout);
 t.addChannel("RadioAlarm.error", sys.stdout);
 
+#t.addChannel("DivMac.trace", sys.stdout);
+t.addChannel("DivMac.debug", sys.stdout);
+t.addChannel("DivMac.error", sys.stdout);
+
+t.addChannel("Lpl.debug", sys.stdout);
+t.addChannel("SyncLpl.debug", sys.stdout);
+
 #t.addChannel("Driver.trace", sys.stdout);
 t.addChannel("Driver.debug", sys.stdout);
 t.addChannel("Driver.error", sys.stdout);
@@ -38,7 +45,7 @@ initializeNodes(t, nodes)
 print "Running simulation (press Ctrl-c to stop)..."
 try:    
 #    while True:
-    for i in range(4000):
+    for i in range(40000):
 #        throttle.checkThrottle();
         t.runNextEvent();
 #        sf.process();
