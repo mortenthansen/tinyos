@@ -42,6 +42,9 @@ generic configuration LowPowerListeningLayerC()
 		interface RadioPacket;
 
 		interface LowPowerListening;
+#ifdef PERIODIC_LOW_POWER_LISTENING
+		interface Timer<TMilli> as SleepTimer;
+#endif
 	}
 	uses
 	{
@@ -78,4 +81,13 @@ implementation
 
 	components NoLedsC as LedsC;
 	LowPowerListeningLayerP.Leds -> LedsC;
+
+#ifdef PERIODIC_LOW_POWER_LISTENING
+#warning "*** USING PERIODIC LOW POWER LISTENING"
+    components new TimerMilliC() as SleepTimerC, RandomC;
+    LowPowerListeningLayerP.SleepTimer -> SleepTimerC;
+    LowPowerListeningLayerP.Random -> RandomC;
+    SleepTimer = SleepTimerC;
+#endif
+
 }

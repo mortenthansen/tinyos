@@ -61,6 +61,11 @@ generic module LowPowerListeningLayerP()
 		interface SystemLowPowerListening;
 
 		interface Leds;
+		
+#ifdef PERIODIC_LOW_POWER_LISTENING
+		interface Timer<TMilli> as SleepTimer;
+		interface Random;
+#endif
 	}
 }
 
@@ -162,7 +167,9 @@ implementation
 			if( sleepInterval > 0 )
 			{
 				state = SLEEP_WAIT;
+#ifndef PERIODIC_LOW_POWER_LISTENING
 				call Timer.startOneShot(sleepInterval);
+#endif
 			}
 			else
 			{
@@ -183,6 +190,10 @@ implementation
 		}
 		else if( state == SEND_SUBSEND)
 		{
+			// TODO: do I still need this?
+			if( call Config.needsAutoAckRequest(txMsg) )
+				call PacketAcknowledgements.requestAck(txMsg);
+
 			txError = call SubSend.send(txMsg);
 
 			if( txError == SUCCESS )
@@ -195,6 +206,8 @@ implementation
 		}
 		else if( state == SEND_DONE )
 		{
+			dbg("Lpl.debug", "Lpl: signal sendDone @ %lu\n", call Timer.getNow());
+
 			state = LISTEN_WAIT;
 			if( sleepInterval > 0 )
 				call Timer.startOneShot(call SystemLowPowerListening.getDelayAfterReceive());
@@ -212,6 +225,10 @@ implementation
 
 		state = OFF_START_END;
 		post transition();
+
+#ifdef PERIODIC_LOW_POWER_LISTENING
+		call SleepTimer.startOneShot(call Random.rand16()%sleepInterval);
+#endif
 
 		return SUCCESS;
 	}
@@ -235,6 +252,9 @@ implementation
 		{
 			call Timer.stop();
 			post transition();
+#ifdef PERIODIC_LOW_POWER_LISTENING
+            call SleepTimer.stop();
+#endif
 		}
 
 		if( state == LISTEN_TIMER || state == LISTEN_WAIT || state == SLEEP_SUBSTOP )
@@ -282,6 +302,24 @@ implementation
 		post transition();
 	}
 
+#ifdef PERIODIC_LOW_POWER_LISTENING
+	event void SleepTimer.fired()
+	{
+		if( state == SLEEP_WAIT )
+		{
+ 			dbg("Lpl.debug", "Lpl: wakeup from sleep @ %lu\n", call SleepTimer.getNow());
+			state = LISTEN_SUBSTART;
+			post transition();
+		} 
+		else {
+			dbg("Lpl.debug", "Lpl: IGNORE wakeup, as layer already active @ %lu\n", call SleepTimer.getNow());
+		}
+
+		if( !call SleepTimer.isRunning() )
+			call SleepTimer.startPeriodic(sleepInterval);
+	}
+#endif
+
 	event message_t* SubReceive.receive(message_t* msg)
 	{
 		call Leds.led0Toggle();
@@ -302,6 +340,8 @@ implementation
 			call Timer.stop();
 			post transition();
 		}
+
+		dbg("Lpl.debug", "Lpl: Sending @ %lu\n", call Timer.getNow());
 
 		if( state == LISTEN_SUBSTART || state == SLEEP_TIMER || state == SLEEP_WAIT )
 			state = SEND_SUBSTART;
@@ -390,6 +430,12 @@ implementation
 			--state;
 			post transition();
 		}
+
+#ifdef PERIODIC_LOW_POWER_LISTENING
+		call SleepTimer.stop();
+		if( sleepInterval > 0 )
+			call SleepTimer.startOneShot(call Random.rand16()%sleepInterval);
+#endif
 	}
 
 	command uint16_t LowPowerListening.getLocalWakeupInterval()
