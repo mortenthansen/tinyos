@@ -41,6 +41,7 @@ generic module TossimRadioP(uint8_t ackDataLength)
 {
 	provides
 	{
+		interface SoftwareAddressMatchConfig;
 		interface SoftwareAckConfig;
 		interface DataAckConfig;
 		interface UniqueConfig;
@@ -68,6 +69,18 @@ generic module TossimRadioP(uint8_t ackDataLength)
 
 implementation
 {
+
+/*----------------- SoftwareAddressMatchConfig -----------------*/
+
+	async command bool SoftwareAddressMatchConfig.hasDestination(message_t* msg)
+	{
+		return call Ieee154PacketLayer.isDataFrame(msg);
+	}
+
+	async command uint16_t SoftwareAddressMatchConfig.getDestination(message_t* msg)
+	{
+		return call Ieee154PacketLayer.getDestAddr(msg);
+	}
 
 /*----------------- SoftwareAckConfig -----------------*/
 

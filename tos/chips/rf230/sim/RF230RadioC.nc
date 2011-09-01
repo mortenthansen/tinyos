@@ -267,7 +267,19 @@ implementation
 #endif
 	SoftwareAckLayerC.Config -> RadioP;
 	SoftwareAckLayerC.SubSend -> CsmaLayerC;
+    //	SoftwareAckLayerC.SubReceive -> CsmaLayerC;
+
+// -------- SoftwareAddressMatch
+
+#ifdef RF230_SOFTWARE_ADDRESS_MATCH
+	#warning "*** USING SOFTWARE ADDRESS MATCH"
+    components new SoftwareAddressMatchLayerC();
+    SoftwareAddressMatchLayerC.Config -> RadioP;
+	SoftwareAckLayerC.SubReceive -> SoftwareAddressMatchLayerC;
+    SoftwareAddressMatchLayerC.SubReceive -> CsmaLayerC;
+#else
 	SoftwareAckLayerC.SubReceive -> CsmaLayerC;
+#endif
 
 // -------- Carrier Sense
 
