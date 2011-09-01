@@ -1,0 +1,8 @@
+
+For dual radio TOSSIM support compile with:
+
+make fleck3c sim
+
+and run TOSSIM with:
+
+python sim.py
