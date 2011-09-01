@@ -1,0 +1,16 @@
+
+The AckDataTest application tests the DataAckLayer of rfxlink.  This
+layer is an alternative to the SoftwareAckLayer which enables a user
+to embed data into ACKs.  In order to conform to the IEEE 15.4
+standard these data ACKs cannot have type ACK and are instead sent as
+data packets without addressing information.  The fact that they are
+sent without addressing information enables the Ieee154PacketLayerP to
+distinguish between these data ACKs and a regular data packet.
+
+For TOSSIM support compile with:
+
+make iris sim
+
+and run TOSSIM with:
+
+python sim.py
