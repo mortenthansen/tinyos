@@ -55,6 +55,9 @@ generic module TossimRadioP(bool usingDataAck, uint8_t ackDataLength)
 #ifdef LOW_POWER_LISTENING
 		interface LowPowerListeningConfig;
 #endif
+#ifdef SYNC_LOW_POWER_LISTENING
+		interface SyncLowPowerListeningConfig;
+#endif
 	}
 
 	uses
@@ -405,6 +408,22 @@ implementation
 	async command uint16_t RandomCollisionConfig.getCongestionBackoff(message_t* msg)
 	{
 		return (uint16_t)(3200 * RADIO_ALARM_MICROSEC);
+	}
+
+#endif
+
+#ifdef SYNC_LOW_POWER_LISTENING
+
+/*----------------- SyncLowPowerListening -----------------*/
+
+	command uint16_t SyncLowPowerListeningConfig.getListenLength()
+	{
+		return call LowPowerListeningConfig.getListenLength();
+	}
+
+	command am_addr_t SyncLowPowerListeningConfig.getDestination(message_t* msg)
+	{
+		return call Ieee154PacketLayer.getDestAddr(msg);
 	}
 
 #endif

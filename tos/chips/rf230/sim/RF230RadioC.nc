@@ -208,11 +208,44 @@ implementation
 #else
 	components new DummyLayerC() as PacketLinkLayerC;
 #endif
-	PacketLinkLayerC -> LowPowerListeningLayerC.Send;
+	PacketLinkLayerC -> SyncLowPowerListeningLayerC.BareSend;
 	PacketLinkLayerC -> LowPowerListeningLayerC.Receive;
 	PacketLinkLayerC -> LowPowerListeningLayerC.RadioPacket;
 
-// -------- Low Power Listening 
+// -------- Sync Low Power Listening 
+
+#ifdef SYNC_LOW_POWER_LISTENING
+
+#if defined(RF230_HARDWARE_ACK) || !defined(RF230_DATA_ACK)
+#error "CANNOT USE SYNC LOW POWER LISTENING WITHOUT DATA ACKNOWLEDGEMENTS"
+#endif
+
+#if !defined(LOW_POWER_LISTENING) || !defined(PERIODIC_LOW_POWER_LISTENING)
+#error "CANNOT USE SYNC LOW POWER LISTENING WITHOUT PERIDIC LOW POWER LISTENING"
+#endif
+
+	#warning "*** USING SYNC LOW POWER LISTENING LAYER"
+
+    components 
+      new SyncLowPowerListeningLayerC(),
+      NeighborhoodC,
+      new AckDataP(synclpl_ack_t, uniqueN(UQ_RF230_ACKDATA_BYTES, 
+                   sizeof(synclpl_ack_t)), uniqueCount(UQ_RF230_ACKDATA_BYTES));
+
+    AckDataP.DataAck -> SoftwareAckLayerC;
+
+    SyncLowPowerListeningLayerC.AckData -> AckDataP;
+    SyncLowPowerListeningLayerC.SleepTimer -> LowPowerListeningLayerC.SleepTimer;
+    SyncLowPowerListeningLayerC.Neighborhood -> NeighborhoodC;
+    SyncLowPowerListeningLayerC.Config -> RadioP;
+    SyncLowPowerListeningLayerC.LowPowerListening -> LowPowerListeningLayerC;
+
+#else   
+    components new DummyLayerC() as SyncLowPowerListeningLayerC;
+#endif
+    SyncLowPowerListeningLayerC.SubBareSend -> LowPowerListeningLayerC;
+
+// -------- Low Power Listening
 
 #ifdef LOW_POWER_LISTENING
 	#warning "*** USING LOW POWER LISTENING LAYER"
