@@ -170,7 +170,7 @@ implementation
 	tasklet_async command void DataAckConfig.reportChannelError()
 	{
 #ifdef TRAFFIC_MONITOR
-		signal TrafficMonitorConfig.channelError();
+//		signal TrafficMonitorConfig.channelError();
 #endif
 	}
 
