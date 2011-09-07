@@ -30,6 +30,8 @@ module CC2420XRadioP
 	provides
 	{
 		interface CC2420XDriverConfig;
+		interface SoftwareAddressMatchConfig;
+		interface DataAckConfig;
 		interface SoftwareAckConfig;
 		interface UniqueConfig;
 		interface CsmaConfig;
@@ -41,6 +43,9 @@ module CC2420XRadioP
 
 #ifdef LOW_POWER_LISTENING
 		interface LowPowerListeningConfig;
+#endif
+#ifdef SYNC_LOW_POWER_LISTENING
+		interface SyncLowPowerListeningConfig;
 #endif
 	}
 
@@ -83,6 +88,78 @@ implementation
 	async command bool CC2420XDriverConfig.requiresRssiCca(message_t* msg)
 	{
 		return call Ieee154PacketLayer.isDataFrame(msg);
+	}
+
+/*----------------- DataAckConfig -----------------*/
+
+	async command bool DataAckConfig.requiresAckWait(message_t* msg)
+	{
+		return call Ieee154PacketLayer.requiresAckWait(msg);
+	}
+
+	async command bool DataAckConfig.isAckPacket(message_t* msg)
+	{
+		return call Ieee154PacketLayer.isDataAckFrame(msg, call DataAckConfig.ackDataLength());
+	}
+
+	async command bool DataAckConfig.verifyAckPacket(message_t* data, message_t* ack)
+	{
+		return call Ieee154PacketLayer.verifyDataAckReply(data, ack, call DataAckConfig.ackDataLength());
+	}
+
+	async command void DataAckConfig.setAckRequired(message_t* msg, bool ack)
+	{
+		call Ieee154PacketLayer.setAckRequired(msg, ack);
+	}
+
+	async command bool DataAckConfig.requiresAckReply(message_t* msg)
+	{
+		return call Ieee154PacketLayer.requiresAckReply(msg);
+	}
+
+	async command void DataAckConfig.createAckPacket(message_t* data, message_t* ack)
+	{
+		call Ieee154PacketLayer.createDataAckReply(data, ack, call DataAckConfig.ackDataLength());
+	}
+
+	async command uint16_t DataAckConfig.getAckTimeout()
+	{
+		return (uint16_t)(SOFTWAREACK_TIMEOUT * RADIO_ALARM_MICROSEC + call DataAckConfig.ackDataLength() * RADIO_ALARM_BYTE);
+	}
+
+	tasklet_async command void DataAckConfig.reportChannelError()
+	{
+#ifdef TRAFFIC_MONITOR
+		signal TrafficMonitorConfig.channelError();
+#endif
+	}
+
+	async command uint16_t DataAckConfig.getDestAddr(message_t* msg) {
+		return call Ieee154PacketLayer.getDestAddr(msg);
+	}
+
+	async command uint16_t DataAckConfig.getSrcAddr(message_t* msg) {
+		return call Ieee154PacketLayer.getSrcAddr(msg);
+	}
+
+	async command void* DataAckConfig.getAckData(message_t* ack) {
+		return call Ieee154PacketLayer.getAckData(ack, call DataAckConfig.ackDataLength());
+	}
+
+	async command uint8_t DataAckConfig.ackDataLength() {
+		return sizeof(cc2420x_ackdata_t);
+	}
+
+/*----------------- SoftwareAddressMatchConfig -----------------*/
+
+	async command bool SoftwareAddressMatchConfig.hasDestination(message_t* msg)
+	{
+		return call Ieee154PacketLayer.isDataFrame(msg);
+	}
+
+	async command uint16_t SoftwareAddressMatchConfig.getDestination(message_t* msg)
+	{
+		return call Ieee154PacketLayer.getDestAddr(msg);
 	}
 
 /*----------------- SoftwareAckConfig -----------------*/
@@ -330,6 +407,22 @@ implementation
 	async command uint16_t RandomCollisionConfig.getCongestionBackoff(message_t* msg)
 	{
 		return (uint16_t)(3200 * RADIO_ALARM_MICROSEC);
+	}
+
+#endif
+
+#ifdef SYNC_LOW_POWER_LISTENING
+
+/*----------------- SyncLowPowerListening -----------------*/
+
+	command uint16_t SyncLowPowerListeningConfig.getListenLength()
+	{
+		return call LowPowerListeningConfig.getListenLength();
+	}
+
+	command am_addr_t SyncLowPowerListeningConfig.getDestination(message_t* msg)
+	{
+		return call Ieee154PacketLayer.getDestAddr(msg);
 	}
 
 #endif

@@ -64,4 +64,10 @@ typedef struct cc2420xpacket_metadata_t
 	cc2420x_metadata_t cc2420x;
 } cc2420xpacket_metadata_t;
 
+#define UQ_CC2420X_ACKDATA_BYTES "CC2420XDataAckLayer.Bytes"
+
+typedef struct cc2420x_ackdata {
+  uint8_t bytes[uniqueCount(UQ_CC2420X_ACKDATA_BYTES)];
+} cc2420x_ackdata_t;
+
 #endif//__CC2420XRADIO_H__

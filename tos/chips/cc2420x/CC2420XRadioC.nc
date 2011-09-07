@@ -22,6 +22,7 @@
  */
 
 #include <RadioConfig.h>
+#include "CC2420XRadio.h"
 
 configuration CC2420XRadioC
 {
@@ -64,6 +65,9 @@ configuration CC2420XRadioC
 		interface TrafficMonitor;
 #endif
 
+#ifdef CC2420X_DATA_ACK
+		interface DataAck;
+#endif
 		interface RadioChannel;
 
 		interface PacketField<uint8_t> as PacketLinkQuality;
@@ -181,9 +185,59 @@ implementation
 #else
 	components new DummyLayerC() as PacketLinkLayerC;
 #endif
-	PacketLinkLayerC -> LowPowerListeningLayerC.Send;
-	PacketLinkLayerC -> LowPowerListeningLayerC.Receive;
-	PacketLinkLayerC -> LowPowerListeningLayerC.RadioPacket;
+PacketLinkLayerC -> DivMacLayerC.BareSend;
+	PacketLinkLayerC -> DivMacLayerC.BareReceive;
+	PacketLinkLayerC -> DivMacLayerC.RadioPacket;
+
+// -------- DivMac 
+
+#ifdef DIVMAC
+
+#if !defined(SYNC_LOW_POWER_LISTENING) || !defined(SYNCLPL_SHARE_INTERVALS)
+#error "CANNOT USE DIVMAC WITHOUT SYNC LOW POWER LISTENING THAT SHARES INTERVALS"
+#endif
+
+    components new DivMacLayerC();
+	DivMacLayerC.Acks -> SoftwareAckLayerC;
+    DivMacLayerC.LowPowerListening -> LowPowerListeningLayerC;    
+    
+#else
+    components new DummyLayerC() as DivMacLayerC;
+#endif
+    DivMacLayerC -> SyncLowPowerListeningLayerC.BareSend;
+    DivMacLayerC -> LowPowerListeningLayerC.Receive;
+    DivMacLayerC -> LowPowerListeningLayerC.RadioPacket;
+
+// -------- Sync Low Power Listening 
+
+#ifdef SYNC_LOW_POWER_LISTENING
+
+#if !defined(CC2420X_DATA_ACK)
+#error "CANNOT USE SYNC LOW POWER LISTENING WITHOUT DATA ACKNOWLEDGEMENTS"
+#endif
+
+#if !defined(LOW_POWER_LISTENING) || !defined(PERIODIC_LOW_POWER_LISTENING)
+#error "CANNOT USE SYNC LOW POWER LISTENING WITHOUT PERIDIC LOW POWER LISTENING"
+#endif
+
+    components 
+      new SyncLowPowerListeningLayerC(),
+      NeighborhoodC,
+      new AckDataP(synclpl_ack_t, uniqueN(UQ_CC2420X_ACKDATA_BYTES, 
+                   sizeof(synclpl_ack_t)), uniqueCount(UQ_CC2420X_ACKDATA_BYTES));
+
+    AckDataP.DataAck -> SoftwareAckLayerC;
+
+    SyncLowPowerListeningLayerC.AckData -> AckDataP;
+    SyncLowPowerListeningLayerC.SleepTimer -> LowPowerListeningLayerC.SleepTimer;
+    SyncLowPowerListeningLayerC.Neighborhood -> NeighborhoodC;
+    SyncLowPowerListeningLayerC.Config -> RadioP;
+    SyncLowPowerListeningLayerC.LowPowerListening -> LowPowerListeningLayerC;
+
+#else   
+    components new DummyLayerC() as SyncLowPowerListeningLayerC;
+#endif
+    SyncLowPowerListeningLayerC.SubBareSend -> LowPowerListeningLayerC;
 
 // -------- Low Power Listening
 
@@ -228,13 +282,30 @@ implementation
 
 // -------- SoftwareAcknowledgement
 
+#ifdef CC2420X_DATA_ACK
+	#warning "*** USING DATA ACKNOWLEDGEMENTS ***"
+	components new DataAckLayerC() as SoftwareAckLayerC;
+	DataAck = SoftwareAckLayerC;
+#else
 	components new SoftwareAckLayerC();
+#endif
 	SoftwareAckLayerC.AckReceivedFlag -> MetadataFlagsLayerC.PacketFlag[unique(UQ_METADATA_FLAGS)];
 	SoftwareAckLayerC.RadioAlarm -> RadioAlarmC.RadioAlarm[unique(UQ_RADIO_ALARM)];
 	PacketAcknowledgements = SoftwareAckLayerC;
 	SoftwareAckLayerC.Config -> RadioP;
 	SoftwareAckLayerC.SubSend -> CsmaLayerC;
-	SoftwareAckLayerC.SubReceive -> CsmaLayerC;
+	SoftwareAckLayerC.SubReceive -> SoftwareAddressMatchLayerC;
+
+// -------- SoftwareAddressMatch
+
+#ifdef CC2420X_SOFTWARE_ADDRESS_MATCH
+	#warning "*** USING SOFTWARE ADDRESS MATCH"
+    components new SoftwareAddressMatchLayerC();
+    SoftwareAddressMatchLayerC.Config -> RadioP;
+#else
+	components new DummyLayerC() as SoftwareAddressMatchLayerC;
+#endif
+    SoftwareAddressMatchLayerC.SubReceive -> CsmaLayerC;
 
 // -------- Carrier Sense
 
