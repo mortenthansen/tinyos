@@ -286,7 +286,7 @@ implementation
 
 // -------- Carrier Sense
 
-	components new DummyLayerC() as CsmaLayerC;
+	components new CsmaLayerC();
 	CsmaLayerC.Config -> RadioP;
 	CsmaLayerC -> TrafficMonitorLayerC.RadioSend;
 	CsmaLayerC -> TrafficMonitorLayerC.RadioReceive;
