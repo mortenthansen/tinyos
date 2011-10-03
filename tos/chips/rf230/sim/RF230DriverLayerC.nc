@@ -47,6 +47,7 @@ configuration RF230DriverLayerC {
     interface PacketField<uint8_t> as PacketRSSI;
     interface PacketField<uint8_t> as PacketTimeSyncOffset;
     interface PacketField<uint8_t> as PacketLinkQuality;
+    interface LinkPacketMetadata;
     
     interface LocalTime<TRadio> as LocalTimeRadio;
     interface Alarm<TRadio, tradio_size>;
@@ -103,6 +104,7 @@ configuration RF230DriverLayerC {
   PacketRSSI = Driver.PacketRSSI;
   PacketTimeSyncOffset = Driver.PacketTimeSyncOffset;
   PacketLinkQuality = Driver.PacketLinkQuality;
+  LinkPacketMetadata = Driver.LinkPacketMetadata;
 
   LocalTimeRadio = Hpl;
   Alarm = Hpl;
