@@ -271,7 +271,7 @@ implementation
 #endif
 	SoftwareAckLayerC.Config -> RadioP;
 	SoftwareAckLayerC.SubSend -> CsmaLayerC;
-    //	SoftwareAckLayerC.SubReceive -> CsmaLayerC;
+    SoftwareAckLayerC.SubReceive -> SoftwareAddressMatchLayerC;
 
 // -------- SoftwareAddressMatch
 
@@ -279,11 +279,10 @@ implementation
 	#warning "*** USING SOFTWARE ADDRESS MATCH"
     components new SoftwareAddressMatchLayerC();
     SoftwareAddressMatchLayerC.Config -> RadioP;
-	SoftwareAckLayerC.SubReceive -> SoftwareAddressMatchLayerC;
-    SoftwareAddressMatchLayerC.SubReceive -> CsmaLayerC;
 #else
-	SoftwareAckLayerC.SubReceive -> CsmaLayerC;
+	components new DummyLayerC() as SoftwareAddressMatchLayerC;
 #endif
+    SoftwareAddressMatchLayerC.SubReceive -> CsmaLayerC;
 
 // -------- Carrier Sense
 
