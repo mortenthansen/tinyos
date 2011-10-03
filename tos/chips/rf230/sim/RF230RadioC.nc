@@ -72,7 +72,9 @@ configuration RF230RadioC
 #ifdef PACKET_LINK
 		interface PacketLink;
 #endif
-
+#ifdef TRAFFIC_MONITOR
+		interface TrafficMonitor;
+#endif
 #ifdef RF230_DATA_ACK
 		interface DataAck;
 #endif
@@ -110,6 +112,7 @@ implementation
 	RadioP.Ieee154PacketLayer -> Ieee154PacketLayerC;
 	RadioP.RadioAlarm -> RadioAlarmC.RadioAlarm[unique("RadioAlarm")];
 	RadioP.PacketTimeStamp -> TimeStampingLayerC;
+	RadioP.RadioPacket -> RadioDriverLayerC;
 
 // -------- RadioAlarm
 
