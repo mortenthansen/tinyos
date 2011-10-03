@@ -103,7 +103,11 @@ implementation
 
 // -------- RadioP
 
-	components new TossimRadioP(uniqueCount(UQ_RF230_ACKDATA_BYTES)) as RadioP;
+#ifdef RF230_DATA_ACK
+	components new TossimRadioP(TRUE, uniqueCount(UQ_RF230_ACKDATA_BYTES)) as RadioP;
+#else
+	components new TossimRadioP(FALSE, uniqueCount(UQ_RF230_ACKDATA_BYTES)) as RadioP;
+#endif
 
 #ifdef RADIO_DEBUG
 	components AssertC;

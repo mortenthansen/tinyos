@@ -37,7 +37,7 @@
 #include <RadioConfig.h>
 #include <Tasklet.h>
 
-generic module TossimRadioP(uint8_t ackDataLength)
+generic module TossimRadioP(bool usingDataAck, uint8_t ackDataLength)
 {
 	provides
 	{
@@ -384,17 +384,22 @@ implementation
 
 	command uint16_t LowPowerListeningConfig.getListenLength()
 	{
-		return 5 + (TOSH_DATA_LENGTH * RADIO_ALARM_BYTE + call DataAckConfig.ackDataLength() * RADIO_ALARM_BYTE + 512)/1024;
+		// TX_TIME + ACK_WAIT + BACKOFF * TX_TIME
+		if(usingDataAck) 
+			return (3*TOSH_DATA_LENGTH*RADIO_ALARM_BYTE + call DataAckConfig.getAckTimeout() + call RandomCollisionConfig.getMinimumBackoff() + 512)/1024;
+		else
+			return (3*TOSH_DATA_LENGTH*RADIO_ALARM_BYTE + call SoftwareAckConfig.getAckTimeout() + call RandomCollisionConfig.getMinimumBackoff() + 512)/1024;
 	}
 
 	async command uint16_t RandomCollisionConfig.getMinimumBackoff()
 	{
-		return (uint16_t)(320 * RADIO_ALARM_MICROSEC + (TOSH_DATA_LENGTH + call DataAckConfig.ackDataLength()) * RADIO_ALARM_BYTE);
+		return (uint16_t)(320*RADIO_ALARM_MICROSEC);
 	}
 
 	async command uint16_t RandomCollisionConfig.getInitialBackoff(message_t* msg)
 	{
-		return (uint16_t)(1600 * RADIO_ALARM_MICROSEC);
+		// TX_TIME
+		return (uint16_t)(TOSH_DATA_LENGTH*RADIO_ALARM_BYTE);
 	}
 
 	async command uint16_t RandomCollisionConfig.getCongestionBackoff(message_t* msg)
