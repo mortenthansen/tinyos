@@ -1,0 +1,11 @@
+UB is currently only supported by CC2420 platforms using default CC2420 stack
+
+Thus to compile for TOSSIM use:
+
+make micaz sim
+
+or to compile for platforms use:
+
+make telosb
+make micaz
+e.g.
