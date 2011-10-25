@@ -1,7 +1,10 @@
 COMPONENT=TestDisseminationAppC
 
+### For LIDI:
+CFLAGS += -I$(TOSDIR)/lib/net -I%T/lib/net/lidi
+
 ### For Drip:
-CFLAGS += -I$(TOSDIR)/lib/net -I%T/lib/net/drip
+#CFLAGS += -I$(TOSDIR)/lib/net -I%T/lib/net/drip
 
 ### For DIP:
 #CFLAGS += -I$(TOSDIR)/lib/net -I%T/lib/net/dip -I%T/lib/net/dip/interfaces
