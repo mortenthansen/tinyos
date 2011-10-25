@@ -1,0 +1,67 @@
+COMPONENT=src/BlockAppC
+
+CFLAGS += -Isrc
+
+<<<<<<< .mine
+CFLAGS += -DNEIGHBOR_TABLE_SIZE=2
+
+=======
+##### Config #####
+
+#CFLAGS += -DUSE_BLOCK
+
+CFLAGS += -DNEIGHBOR_TABLE_SIZE=2
+CFLAGS += -DBUFFER_SIZE=30
+CFLAGS += -DPERIOD=1024
+
+CFLAGS += -DBLOCK_MAX_RETRANSMISSIONS=100
+CFLAGS += -DDEBUG_QUEUE_SIZE=100
+
+CFLAGS += -DFAKE_PRR=90
+
+CFLAGS += -DDEBUG_IGNORE="20,21,22,23,24,25,26,32,41,42,52,60,62,65,66,67,68,70,72"
+
+##### End #####
+
+>>>>>>> .r340
+CFLAGS += -DPRINTF_BUFFER_SIZE=1000
+<<<<<<< .mine
+CFLAGS += -DPRINT_DETAIL
+#CFLAGS += -I$(TOSDIR)/lib/printf
+=======
+#CFLAGS += -I$(TOSDIR)/lib/printf
+>>>>>>> .r340
+# if print should be disabled
+CFLAGS += -I$(TOSCONTRIB)/csau/misc/tos/types
+
+CFLAGS += -I$(TOSEXTDIR)/lib/net/block
+CFLAGS += -I$(TOSEXTDIR)/lib/debug
+
+CFLAGS += -I$(TOSCONTRIB)/csau/misc/tos/lib/neighbortable
+<<<<<<< .mine
+CFLAGS += -I$(TOSCONTRIB)/csau/misc/tos/lib/timemeasure
+=======
+CFLAGS += -I$(TOSCONTRIB)/csau/misc/tos/lib/timemeasure
+CFLAGS += -I$(TOSCONTRIB)/csau/misc/tos/lib/timer
+
+
+CFLAGS += -DDEBUG
+>>>>>>> .r340
+CFLAGS += -DQUICKTIME
+
+<<<<<<< .mine
+CFLAGS += -DCC2420_DEF_RFPOWER=31
+CFLAGS += -DPACKET_LINK
+#CFLAGS += -DCC2420_SW_ACKNOWLEDGEMENTS
+CFLAGS += -DCC2420_HW_ACKNOWLEDGEMENTS
+=======
+#CFLAGS += -DCC2420_DEF_RFPOWER=31
+CFLAGS += -DPACKET_LINK
+>>>>>>> .r340
+
+#CFLAGS += -DCC2420_HW_ACKNOWLEDGEMENTS
+
+BUILD_EXTRA_DEPS += 
+CLEAN_EXTRA = simbuild build doc app.xml 
+
+include $(MAKERULES)

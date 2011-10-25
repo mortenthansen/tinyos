@@ -1,0 +1,45 @@
+#include "BlockApp.h"
+#include "printf.h"
+#include "QuickTime.h"
+
+configuration BlockAppC @safe(){
+
+} implementation {
+
+	components 
+		MainC,
+		LedsC,
+		new RandomOffsetTimerMilliC() as Timer,
+		ActiveMessageC,
+		SerialActiveMessageC,
+#ifdef USE_BLOCK
+		BlockSenderC as Sender,
+		BlockReceiverC as Receiver,
+#else
+		AMBlockSenderC as Sender,
+		AMBlockReceiverC as Receiver,
+#endif
+		NeighborTableC,
+		BlockAppP as App;
+		
+	App.Boot -> MainC.Boot;
+	App.Leds -> LedsC;
+	App.Timer -> Timer;
+	App.SerialControl -> SerialActiveMessageC;
+	App.RadioControl -> ActiveMessageC;
+	App.BlockSend -> Sender;
+	App.Receive -> Receiver;
+	App.Acks -> ActiveMessageC;
+	App.NeighborTable -> NeighborTableC;
+
+	components
+		new TimeMeasureMicroC();
+	App.TimeMeasure -> TimeMeasureMicroC;
+
+	components
+		AMDebugSenderC;
+
+	components 
+		QuickTimeC;
+
+}

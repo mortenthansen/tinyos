@@ -1,0 +1,115 @@
+#include "BlockTest.h"
+
+#include "printf.h"
+
+module BlockTestP @safe() {
+
+	uses {
+		interface Boot;
+		interface Leds;
+		interface Timer<TMilli>;
+
+		interface SplitControl as RadioControl;
+		interface BlockSend;
+		interface Receive;
+		interface PacketAcknowledgements as Acks;
+		interface NeighborTable;
+	}
+
+} implementation {
+
+	enum {
+		BUFFER_SIZE = 80,
+	};
+
+	message_t messageBuffer[BUFFER_SIZE];
+	message_t* ONE_NOK messages[BUFFER_SIZE];
+	
+	/********** Init **********/
+
+	event void Boot.booted() {
+		uint8_t i;
+		printf("%i: booted\n", TOS_NODE_ID);
+		for(i=0; i<BUFFER_SIZE; i++) {
+			messages[i] = &messageBuffer[i];
+		}
+		call RadioControl.start();
+		call NeighborTable.insert(TOS_NODE_ID+1);
+		call NeighborTable.insert(TOS_NODE_ID-1);
+	}
+ 
+	event void RadioControl.startDone(error_t error) {
+		if(error==SUCCESS) {
+			
+			call Timer.startPeriodic(PERIOD);
+			
+		} else {
+			call RadioControl.start();
+		}
+	}
+
+	event void RadioControl.stopDone(error_t error) {
+
+	}
+
+	/********** Send **********/
+
+	event void Timer.fired() {
+		if(TOS_NODE_ID==SENDER_ID) {
+			//printf("fired\n");
+			if(call BlockSend.send(TOS_NODE_ID+1, messages, BUFFER_SIZE, sizeof(blocktest_msg_t))!=SUCCESS) {
+				//call Leds.led0Toggle();
+				//printf("failed big time\n");
+			} else {
+#ifndef TOSSIM
+				//time_start();
+#endif
+			}
+
+		}
+	}
+
+  event void BlockSend.sendDone(message_t** msgs, error_t error) {
+		uint8_t i;
+
+#ifndef TOSSIM
+		//time_stop();
+#endif
+
+		if(error==SUCCESS) {
+			//printf("%i %s: send success\n",TOS_NODE_ID, __FUNCTION__);
+			call Leds.led1Toggle();
+		} else {
+			//printf("%i %s: send failed\n",TOS_NODE_ID, __FUNCTION__);
+			call Leds.led0Toggle();
+		}
+
+		for(i=0; i<BUFFER_SIZE; i++) {
+			printf("%hhu", call Acks.wasAcked(messages[i]));
+		}
+
+#ifndef TOSSIM
+		printf(", t=%lu\n",time_get());
+#else
+		printf("\n");
+#endif
+
+		printfflush();
+	}
+
+	/********** Receive **********/
+
+  event message_t* Receive.receive(message_t* msg, void* payload, uint8_t len) {
+		call Leds.led2Toggle();
+		//printf("received dsad dsaaaa dsada dsd asd sadsadsa sa dsa dsa\n");
+		printfflush();
+		return msg;
+	}
+
+	/********** NeighborTable **********/
+	
+	event void NeighborTable.evicted(am_addr_t addr) {
+
+	}
+
+}

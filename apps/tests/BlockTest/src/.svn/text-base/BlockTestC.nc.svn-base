@@ -1,0 +1,32 @@
+#include "BlockTest.h"
+#include "QuickTime.h"
+
+configuration BlockTestC @safe(){
+
+} implementation {
+
+	components 
+		MainC,
+		LedsC,
+		new TimerMilliC(),
+		ActiveMessageC,
+		BlockSenderC as Sender,
+		BlockReceiverC as Receiver,
+		//new AMSenderC(AM_TEST_MSG) as Sender,
+		//new AMReceiverC(AM_TEST_MSG) as Receiver,
+		NeighborTableC,
+		BlockTestP as App;
+		
+	App.Boot -> MainC.Boot;
+	App.Leds -> LedsC;
+	App.Timer -> TimerMilliC;
+	App.RadioControl -> ActiveMessageC;
+	App.BlockSend -> Sender;
+	App.Receive -> Receiver;
+	App.Acks -> ActiveMessageC;
+	App.NeighborTable -> NeighborTableC;
+
+#ifndef TOSSIM	
+	components QuickTimeC;
+#endif
+}

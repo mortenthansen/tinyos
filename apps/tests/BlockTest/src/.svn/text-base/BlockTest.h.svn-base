@@ -1,0 +1,25 @@
+#ifndef BLOCKTEST_H
+#define BLOCKTEST_H
+
+#include "printf.h"
+#include "message.h"
+
+#include "Block.h"
+
+enum {
+	AM_TEST_MSG = 2,
+	PERIOD = 1024, 
+#ifndef TOSSIM
+	SENDER_ID = 2,
+	RECEIVER_ID = 3,
+#else
+	SENDER_ID = 0,
+	RECEIVER_ID = 1,
+#endif
+};
+
+typedef nx_struct blocktest_msg {
+	nx_uint8_t data[TOSH_DATA_LENGTH-sizeof(block_header_t)];
+} blocktest_msg_t;
+
+#endif

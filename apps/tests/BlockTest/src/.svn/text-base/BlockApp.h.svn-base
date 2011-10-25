@@ -1,0 +1,20 @@
+#ifndef BLOCKAPP_H
+#define BLOCKAPP_H
+
+#include "message.h"
+#include "Block.h"
+
+enum {
+	//	AM_APP_MSG = 2,
+	RECEIVER_ID = 2,
+};
+
+typedef nx_struct blockapp_msg {
+#ifdef USE_BLOCK
+	nx_uint8_t data[TOSH_DATA_LENGTH-sizeof(block_header_t)];
+#else
+	nx_uint8_t data[TOSH_DATA_LENGTH];
+#endif
+} blockapp_msg_t;
+
+#endif
