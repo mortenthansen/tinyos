@@ -1,0 +1,98 @@
+/*
+ * Copyright (c) 2009 Aarhus University
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * - Redistributions of source code must retain the above copyright
+ *   notice, this list of conditions and the following disclaimer.
+ * - Redistributions in binary form must reproduce the above copyright
+ *   notice, this list of conditions and the following disclaimer in the
+ *   documentation and/or other materials provided with the
+ *   distribution.
+ * - Neither the name of Aarhus University nor the names of
+ *   its contributors may be used to endorse or promote products derived
+ *   from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL AARHUS
+ * UNIVERSITY OR ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/**
+ * @author Morten Tranberg Hansen <mth at cs dot au dot dk>
+ * @date   October 18 2009
+ */
+
+module BlockPacketP {
+
+	provides {
+		interface Packet;
+		interface BlockPacket;
+	}
+
+	uses {
+		interface Packet as SubPacket;
+	}
+
+} implementation {
+
+	/***************** Packet ****************/
+
+  command void Packet.clear(message_t* msg) {
+    call SubPacket.clear(msg);
+  }
+
+  command uint8_t Packet.payloadLength(message_t* msg) {
+    return call SubPacket.payloadLength(msg) - sizeof(block_header_t);
+  }
+
+  command void Packet.setPayloadLength(message_t* msg, uint8_t len) {
+    call SubPacket.setPayloadLength(msg, len + sizeof(block_header_t));
+  }
+  
+  command uint8_t Packet.maxPayloadLength() {
+    return call SubPacket.maxPayloadLength() - sizeof(block_header_t);
+  }
+
+  command void* Packet.getPayload(message_t* msg, uint8_t len) {
+    uint8_t* payload = call SubPacket.getPayload(msg, len + sizeof(block_header_t));
+    if (payload != NULL) {
+      payload += sizeof(block_header_t);
+    }
+    return payload;
+  }
+
+	/***************** BlockPacket ****************/
+
+  block_header_t* get_header(message_t* m) {
+    return (block_header_t*)call SubPacket.getPayload(m, sizeof(block_header_t));
+  }
+
+	command uint8_t BlockPacket.getRequest(message_t* msg) {
+		return get_header(msg)->request;
+	}
+
+	command void BlockPacket.setRequest(message_t* msg, uint8_t request) {
+		get_header(msg)->request = request;
+	}
+
+	command uint8_t BlockPacket.getSequenceNumber(message_t* msg) {
+		return get_header(msg)->seqno;
+	}
+
+	command void BlockPacket.setSequenceNumber(message_t* msg, uint8_t seqno) {
+		get_header(msg)->seqno = seqno;
+	}
+
+}
